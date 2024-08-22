@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "113790179333",
+    "project_id": "timbas-a4b91",
+    "storage_bucket": "timbas-a4b91.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:113790179333:android:b167902eb8a73bd847e46c",
+        "android_client_info": {
+          "package_name": "com.adj.timbas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFT5Yzsr4TJ4X3F34FP2YElChTRgFdt-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
