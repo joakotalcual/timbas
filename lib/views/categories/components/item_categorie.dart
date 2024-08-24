@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:timbas/services/database/firebase_services.dart';
-import 'package:timbas/services/database/sqlite.dart';
+import 'package:timbas/controllers/bd_controller.dart';
 
 class ItemCategorie extends StatefulWidget {
   final bool isEdit;
@@ -49,16 +48,10 @@ class _ItemCategorieState extends State<ItemCategorie> {
               // Implementar lógica de guardado aquí
               if (widget.isEdit) {
                 // Actualiza en Firebase y en la base de datos local
-                await updateCategories(widget.uid!, name);
-                await updateLocalCategory(widget.uid!, name);
-                Navigator.pop(context);
+                await updateCategorieController(context, widget.uid!, name, 0);
               } else {
                 // Añade en Firebase y en la base de datos local
-                String uid =
-                    await addCategories(name); // Obtiene el UID de Firestore
-                await addLocalCategory(
-                    uid, name); // Usa el UID para la base de datos local
-                Navigator.pop(context);
+                await updateCategorieController(context, '', name, 1);
               }
             },
             child: const Text(
@@ -87,14 +80,7 @@ class _ItemCategorieState extends State<ItemCategorie> {
             widget.isEdit
                 ? TextButton(
                     onPressed: () async {
-                      // Llama al diálogo de confirmación y espera el resultado
-                      bool confirmation = await _showConfirmationDialog(
-                          context, 'la categoría');
-                      if (confirmation) {
-                        // Elimina la categoría de la base de datos en línea y local
-                        await deleteCategories(widget.uid!);
-                        await deleteLocalCategory(widget.uid!);
-                      }
+                      await updateCategorieController(context, widget.uid!, '', 2);
                     },
                     child: const Text(
                       "ELIMINAR CATEGORÍA",
@@ -135,35 +121,4 @@ class _ItemCategorieState extends State<ItemCategorie> {
       ),
     );
   }
-}
-
-Future<bool> _showConfirmationDialog(
-    BuildContext context, String categoria) async {
-  // Muestra el diálogo y espera la respuesta del usuario
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Confirmación'),
-      content: Text(
-        '¿Estás seguro de que deseas eliminar la categoría $categoria',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(true); // Confirma la acción
-          },
-          child: const Text('Sí'),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(false); // Cancela la acción
-          },
-          child: const Text('No'),
-        ),
-      ],
-    ),
-  );
-
-  // Retorna el resultado (true si el usuario confirma, false si cancela)
-  return result ?? false;
 }

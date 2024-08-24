@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:timbas/controllers/bd_controller.dart';
 import 'dart:io';
 
 import 'package:timbas/services/database/firebase_services.dart';
@@ -36,6 +37,7 @@ class _ItemProductState extends State<ItemProduct> {
   late TextEditingController _nameController;
   File? _selectedImage;
   String? _assetImage; // Variable para manejar la imagen de assets
+  String? _imagePath;
 
   @override
   void initState() {
@@ -79,6 +81,7 @@ class _ItemProductState extends State<ItemProduct> {
     if (image != null) {
       setState(() {
         _selectedImage = File(image.path);
+        _imagePath = image.path;
         _assetImage = null; // Limpiar la imagen de assets cuando se selecciona una nueva imagen
       });
     }
@@ -98,14 +101,10 @@ class _ItemProductState extends State<ItemProduct> {
               String name = _nameController.text;
               //  lógica de guardado aquí
               if (widget.isEdit) {
-                await updateProducts(widget.uid!, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable);
-                await updateLocalProduct(widget.uid!, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable ? 1 : 0);
-                Navigator.pop(context);
+                await updateProductController(context, widget.uid!, name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 0);
               } else {
                 //  lógica de inserción aquí
-                String uid = await addProducts(name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable);
-                await addLocalProduct(uid, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable ? 1 : 0);
-                Navigator.pop(context);
+                await updateProductController(context, '', name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 1);
               }
             },
             child: const Text(
@@ -218,8 +217,9 @@ class _ItemProductState extends State<ItemProduct> {
             const SizedBox(height: 16),
             widget.isEdit
                 ? TextButton(
-                    onPressed: () {
-                      // Implementar funcionalidad de eliminación aquí
+                    onPressed: () async {
+                      // funcionalidad de eliminación aquí
+                      await updateProductController(context, widget.uid!, '', _assetImage!, _selectedCategory!, _priceController.text, _isAvailable, 2);
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,

@@ -81,3 +81,8 @@ Future<void> updateProducts(String uid, String name, String image, String catego
     'activo' : active
   });
 }
+
+Future<void> deleteProducts(String uid) async {
+  // Elimina la categoría a Firestore
+  await db.collection('productos').doc(uid).delete();
+}

@@ -65,6 +65,16 @@ Future<void> updateLocalCategory(String uid, String name) async {
   );
 }
 
+Future<void> deleteLocalCategory(String uid) async {
+  final db = await getLocalDatabase();
+  await db.delete(
+    'categorias',
+    where: 'uid = ?',
+    whereArgs: [uid],
+  );
+  print('Categoría "$uid" eliminada correctamente.');
+}
+
 // Función para agregar una categoría local
 Future<void> addLocalProduct(String uid, String name, String image, String category, double price, int active) async {
   final db = await getLocalDatabase();
@@ -98,12 +108,12 @@ Future<void> updateLocalProduct(String uid, String name, String image, String ca
   );
 }
 
-Future<void> deleteLocalCategory(String uid) async {
+Future<void> deleteLocalProducts(String uid) async {
   final db = await getLocalDatabase();
   await db.delete(
-    'categorias',
+    'productos',
     where: 'uid = ?',
     whereArgs: [uid],
   );
-  print('Categoría "$uid" eliminada correctamente.');
+  print('Producto "$uid" eliminada correctamente.');
 }

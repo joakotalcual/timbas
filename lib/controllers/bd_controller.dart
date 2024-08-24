@@ -1,8 +1,12 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:timbas/helpers/validated.dart';
 import 'package:timbas/services/database/firebase_services.dart';
 import 'package:timbas/services/database/sqlite.dart';
+import 'package:timbas/views/dialogCustom/show_confirm_dialog.dart';
+import 'package:timbas/views/dialogCustom/show_dialog.dart';
 
 Future<void> syncCategoriesFromFirestore() async {
   try {
@@ -112,4 +116,88 @@ Future<DateTime?> getLastSyncDate() async {
 Future<void> setLastSyncDate(DateTime date) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('last_sync_date', date.toIso8601String());
+}
+
+Future<void> updateCategorieController(BuildContext context, String uid, String name, int isEdit)async{
+  //Validar y hacer la actualización
+  switch(isEdit){
+    case 0:
+      if(isValidName(name)){
+        await updateCategories(uid, name);
+        await updateLocalCategory(uid, name);
+        Navigator.pop(context);
+      }else{
+        showDialogCustom(context, 'NOMBRE INCORRECTO', 'FAVOR DE PONER UN NOMBRE CORRECTO.');
+      }
+      break;
+    case 1:
+      if(isValidName(name)){
+        String uid =await addCategories(name); // Obtiene el UID de Firestore
+        await addLocalCategory(uid, name); // Usa el UID para la base de datos local
+        Navigator.pop(context);
+      }else{
+        showDialogCustom(context, 'NOMBRE INCORRECTO', 'FAVOR DE PONER UN NOMBRE CORRECTO.');
+      }
+      break;
+    default:
+      if(await showConfirmationDialog(context, '¿Estás seguro de que deseas eliminar la categoría')){
+        // Elimina la categoría de la base de datos en línea y local
+        await deleteCategories(uid);
+        await deleteLocalCategory(uid);
+      }
+  }
+}
+
+Future<void> updateProductController(BuildContext context, String uid, String name, String assetImage, String selectedCategory, String price, bool isAvailable, int isEdit)async{
+  //Validar y hacer la actualización
+  switch(isEdit){
+    case 0:
+      if(isValidName(name)){
+        if(isValidCategory(selectedCategory)){
+          if(isValidPrice(price)){
+            if(isValidImage(assetImage)){
+              await updateProducts(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable);
+              await updateLocalProduct(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable ? 1 : 0);
+              Navigator.pop(context);
+            }else{
+              showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
+            }
+          }else{
+            showDialogCustom(context, 'PRECIO INCORRECTO', 'FAVOR DE PONER UN PRECIO CORRECTO.');
+          }
+        }else{
+          showDialogCustom(context, 'SELECCIONAR CATEGORIA', 'FAVOR DE ESCOGER UNA CATEGORÍA.');
+        }
+      }else{
+        showDialogCustom(context, 'NOMBRE INCORRECTO', 'FAVOR DE PONER UN NOMBRE CORRECTO.');
+      }
+      break;
+    case 1:
+      if(isValidName(name)){
+        if(isValidCategory(selectedCategory)){
+          if(isValidPrice(price)){
+            if(isValidImage(assetImage)){
+              String uid = await addProducts(name, assetImage, selectedCategory, double.parse(price), isAvailable);
+              await addLocalProduct(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable ? 1 : 0);
+              Navigator.pop(context);
+            }else{
+              showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
+            }
+          }else{
+            showDialogCustom(context, 'PRECIO INCORRECTO', 'FAVOR DE PONER UN PRECIO CORRECTO.');
+          }
+        }else{
+          showDialogCustom(context, 'SELECCIONAR CATEGORIA', 'FAVOR DE ESCOGER UNA CATEGORÍA.');
+        }
+      }else{
+        showDialogCustom(context, 'NOMBRE INCORRECTO', 'FAVOR DE PONER UN NOMBRE CORRECTO.');
+      }
+      break;
+    default:
+      if(await showConfirmationDialog(context, '¿Estás seguro de que deseas eliminar la categoría')){
+        // Elimina la categoría de la base de datos en línea y local
+        await deleteProducts(uid);
+        await deleteLocalProducts(uid);
+      }
+  }
 }
