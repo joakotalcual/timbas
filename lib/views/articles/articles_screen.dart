@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:timbas/views/articles/components/products_screen.dart';
+import 'package:timbas/views/categories/categories_screen.dart';
 
 class ArticlesScreen extends StatelessWidget {
   const ArticlesScreen({super.key});
@@ -28,7 +29,14 @@ class ArticlesScreen extends StatelessWidget {
           ),
         ),
         TextButton(
-          onPressed: (){},
+          onPressed: (){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoriesScreen(),
+              ),
+            );
+          },
           child: const Row(
             children: [
               Icon(Icons.view_comfy_alt_outlined),

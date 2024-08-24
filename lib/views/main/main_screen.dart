@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timbas/views/articles/articles_screen.dart';
+import 'package:timbas/views/categories/categories_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -164,24 +165,6 @@ class Buys extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        ListTile(
-          leading: Container(
-            width: 20,
-            height: 20,
-            color: Colors.grey,
-          ),
-          title: const Text("Combinado"),
-          trailing: const Text("\$75.00"),
-        ),
-        ListTile(
-          leading: Container(
-            width: 20,
-            height: 20,
-            color: Colors.red,
-          ),
-          title: const Text("Oreo"),
-          trailing: const Text("\$60.00"),
         ),
       ],
     );

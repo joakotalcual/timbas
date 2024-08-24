@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
+import 'package:timbas/services/database/firebase_services.dart';
+import 'package:timbas/services/database/sqlite.dart';
 
 class ItemProduct extends StatefulWidget {
   final bool isEdit;
-  const ItemProduct({super.key, required this.isEdit});
+  final String? name, image, uid, category;
+  final double? price;
+  final bool? active;
+  final Map<String, String>? categoryNames;
+
+  const ItemProduct({
+    super.key,
+    required this.isEdit,
+    this.name,
+    this.image, // Ruta de la imagen, como "assets/images/icons/oreo.png"
+    this.category,
+    this.price,
+    this.active,
+    this.uid,
+    this.categoryNames,
+  });
 
   @override
   _ItemProductState createState() => _ItemProductState();
@@ -13,13 +32,56 @@ class ItemProduct extends StatefulWidget {
 class _ItemProductState extends State<ItemProduct> {
   bool _isAvailable = true;
   String? _selectedCategory;
-  final List<String> _categories = ['Diablitos', 'Frappes', 'Frappes de frutas', 'Machakados', 'Smoothies'];
-  final TextEditingController _priceController = TextEditingController();
+  late TextEditingController _priceController;
+  late TextEditingController _nameController;
+  File? _selectedImage;
+  String? _assetImage; // Variable para manejar la imagen de assets
+
+  @override
+  void initState() {
+    _priceController = TextEditingController(
+      text: widget.isEdit ? widget.price?.toString() : null,
+    );
+    _nameController = TextEditingController(
+      text: widget.isEdit ? widget.name : null,
+    );
+
+    // Inicializar categoría y estado "activo" si es edición
+    if (widget.isEdit) {
+      //_selectedCategory = _categories[widget.category != null ? (widget.category!) : 0];
+      _isAvailable = widget.active ?? true;
+      if (widget.category != null) {
+        _selectedCategory = widget.category;
+      }
+      // Cargar imagen desde assets si está disponible
+      if (widget.image != null && widget.image!.startsWith('assets/')) {
+        _assetImage = widget.image;
+      }else if(widget.image != null){
+        _assetImage = widget.image;
+      }
+    } else {
+      _isAvailable = true;
+    }
+    super.initState();
+  }
 
   @override
   void dispose() {
     _priceController.dispose();
+    _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+        _assetImage = null; // Limpiar la imagen de assets cuando se selecciona una nueva imagen
+      });
+    }
   }
 
   @override
@@ -32,8 +94,19 @@ class _ItemProductState extends State<ItemProduct> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // Implement save functionality here
+            onPressed: () async {
+              String name = _nameController.text;
+              //  lógica de guardado aquí
+              if (widget.isEdit) {
+                await updateProducts(widget.uid!, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable);
+                await updateLocalProduct(widget.uid!, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable ? 1 : 0);
+                Navigator.pop(context);
+              } else {
+                //  lógica de inserción aquí
+                String uid = await addProducts(name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable);
+                await addLocalProduct(uid, name, _assetImage!, _selectedCategory!, double.parse(_priceController.text), _isAvailable ? 1 : 0);
+                Navigator.pop(context);
+              }
             },
             child: const Text(
               "GUARDAR",
@@ -51,8 +124,9 @@ class _ItemProductState extends State<ItemProduct> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
                 labelText: 'Nombre',
               ),
             ),
@@ -60,10 +134,10 @@ class _ItemProductState extends State<ItemProduct> {
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               hint: const Text('Seleccionar categoría'),
-              items: _categories.map((category) {
+              items: widget.categoryNames?.entries.map((entry) {
                 return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
+                  value: entry.key,
+                  child: Text(entry.value),
                 );
               }).toList(),
               onChanged: (String? newValue) {
@@ -78,7 +152,7 @@ class _ItemProductState extends State<ItemProduct> {
             const SizedBox(height: 16),
             TextField(
               controller: _priceController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 _PriceInputFormatter(),
               ],
@@ -88,6 +162,33 @@ class _ItemProductState extends State<ItemProduct> {
             ),
             const SizedBox(height: 16),
             const Text("SELECCIONAR FOTO"),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: _selectedImage != null
+                    ? Image.file(
+                        _selectedImage!,
+                        fit: BoxFit.cover,
+                      )
+                    : _assetImage != null
+                        ? Image.asset(
+                            _assetImage!,
+                            fit: BoxFit.cover,
+                          )
+                        : const Center(
+                            child: Text(
+                              'Toca para seleccionar una imagen',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+              ),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -115,15 +216,17 @@ class _ItemProductState extends State<ItemProduct> {
               ],
             ),
             const SizedBox(height: 16),
-            widget.isEdit ? TextButton(
-              onPressed: () {
-                // Implement delete functionality here
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [Icon(Icons.delete), Text("ELIMINAR ARTICULOS")],
-              ),
-            ) : const SizedBox.shrink(),
+            widget.isEdit
+                ? TextButton(
+                    onPressed: () {
+                      // Implementar funcionalidad de eliminación aquí
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Icon(Icons.delete), Text("ELIMINAR ARTICULO")],
+                    ),
+                  )
+                : const SizedBox.shrink(),
             const SizedBox(height: 16),
           ],
         ),

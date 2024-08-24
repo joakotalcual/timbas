@@ -1,122 +1,109 @@
-// import 'package:sqflite/sqflite.dart';
-// import 'package:path/path.dart';
-// import 'package:timbas/models/products.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
-// // Helper de base de datos
-// class DatabaseHelper {
-//   static final DatabaseHelper _instance = DatabaseHelper._internal();
+// Función para abrir la base de datos SQLite
+Future<Database> getLocalDatabase() async {
+  return openDatabase(
+    join(await getDatabasesPath(), 'app_database.db'),
+    onCreate: (db, version) async {
+      // Crear las tablas si no existen
+      await db.execute(
+        '''
+        CREATE TABLE categorias(
+          uid TEXT PRIMARY KEY,
+          nombre TEXT
+        );
+        '''
+      );
+      await db.execute(
+        '''
+        CREATE TABLE productos(
+          uid TEXT PRIMARY KEY,
+          nombre TEXT,
+          imagen TEXT,
+          categorias TEXT,
+          precio REAL,
+          activo INTEGER
+        );
+        '''
+      );
+    },
+    version: 1,
+  );
+}
 
-//   factory DatabaseHelper() => _instance;
+// Función para obtener categorías locales desde la base de datos
+Future<List<Map<String, dynamic>>> getLocalCategories() async {
+  final db = await getLocalDatabase();
+  return await db.query('categorias');
+}
 
-//   static Database? _database;
+// Función para obtener productos locales desde la base de datos
+Future<List<Map<String, dynamic>>> getLocalProducts() async {
+  final db = await getLocalDatabase();
+  return await db.query('productos');
+}
 
-//   DatabaseHelper._internal();
+// Función para agregar una categoría local
+Future<void> addLocalCategory(String uid, String name) async {
+  final db = await getLocalDatabase();
+  await db.insert(
+    'categorias',
+    {'uid': uid, 'nombre': name}, // Incluye el UID en la base de datos local
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
 
-//   Future<Database> get database async {
-//     if (_database != null) return _database!;
+// Función para actualizar una categoría local
+Future<void> updateLocalCategory(String uid, String name) async {
+  final db = await getLocalDatabase();
+  await db.update(
+    'categorias',
+    {'nombre': name},
+    where: 'uid = ?',
+    whereArgs: [uid],
+  );
+}
 
-//     _database = await _initDB();
-//     return _database!;
-//   }
+// Función para agregar una categoría local
+Future<void> addLocalProduct(String uid, String name, String image, String category, double price, int active) async {
+  final db = await getLocalDatabase();
+  await db.insert(
+    'productos',
+    {
+      'nombre' : name,
+      'imagen' : image,
+      'categorias' : category,
+      'precio' : price,
+      'activo' : active
+    }, // Incluye el UID en la base de datos local
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
 
-//   Future<Database> _initDB() async {
-//     String path = join(await getDatabasesPath(), 'productos.db');
+// Función para actualizar una categoría local
+Future<void> updateLocalProduct(String uid, String name, String image, String category, double price, int active) async {
+  final db = await getLocalDatabase();
+  await db.update(
+    'productos',
+    {
+      'nombre' : name,
+      'imagen' : image,
+      'categorias' : category,
+      'precio' : price,
+      'activo' : active
+    },
+    where: 'uid = ?',
+    whereArgs: [uid],
+  );
+}
 
-//     return await openDatabase(
-//       path,
-//       version: 1,
-//       onCreate: (db, version) async {
-//         await db.execute('''
-//           CREATE TABLE categorias(
-//             id INTEGER PRIMARY KEY AUTOINCREMENT,
-//             nombre TEXT
-//           )
-//         ''');
-
-//         await db.execute('''
-//           CREATE TABLE productos(
-//             id INTEGER PRIMARY KEY AUTOINCREMENT,
-//             nombre TEXT,
-//             precio REAL,
-//             descripcion TEXT,
-//             imagen TEXT,
-//             categoria_id INTEGER,
-//             FOREIGN KEY (categoria_id) REFERENCES categorias(id)
-//           )
-//         ''');
-//       },
-//     );
-//   }
-
-//   // Insertar una categoría
-//   Future<void> insertCategoria(Categoria categoria) async {
-//     final db = await database;
-//     await db.insert(
-//       'categorias',
-//       categoria.toMap(),
-//       conflictAlgorithm: ConflictAlgorithm.replace,
-//     );
-//   }
-
-//   // Insertar un producto
-//   Future<void> insertProducto(Producto producto) async {
-//     final db = await database;
-//     await db.insert(
-//       'productos',
-//       producto.toMap(),
-//       conflictAlgorithm: ConflictAlgorithm.replace,
-//     );
-//   }
-
-//   // Obtener todos los productos
-//   Future<List<Producto>> getProductos() async {
-//     final db = await database;
-//     final List<Map<String, dynamic>> maps = await db.query('productos');
-
-//     return List.generate(maps.length, (i) {
-//       return Producto(
-//         id: maps[i]['id'],
-//         nombre: maps[i]['nombre'],
-//         precio: maps[i]['precio'],
-//         descripcion: maps[i]['descripcion'],
-//         imagen: maps[i]['imagen'],
-//         categoriaId: maps[i]['categoria_id'],
-//       );
-//     });
-//   }
-
-//   // Obtener todas las categorías con sus productos
-//   Future<List<Categoria>> getCategorias() async {
-//     final db = await database;
-//     final List<Map<String, dynamic>> categoriaMaps = await db.query('categorias');
-
-//     List<Categoria> categorias = [];
-
-//     for (var categoriaMap in categoriaMaps) {
-//       final List<Map<String, dynamic>> productoMaps = await db.query(
-//         'productos',
-//         where: 'categoria_id = ?',
-//         whereArgs: [categoriaMap['id']],
-//       );
-
-//       List<Producto> productos = List.generate(productoMaps.length, (i) {
-//         return Producto(
-//           id: productoMaps[i]['id'],
-//           nombre: productoMaps[i]['nombre'],
-//           precio: productoMaps[i]['precio'],
-//           descripcion: productoMaps[i]['descripcion'],
-//           imagen: productoMaps[i]['imagen'],
-//           categoriaId: productoMaps[i]['categoria_id'],
-//         );
-//       });
-
-//       categorias.add(Categoria(
-//         id: categoriaMap['id'],
-//         nombre: categoriaMap['nombre'],
-//         productos: productos,
-//       ));
-//     }
-
-//     return categorias;
-//   }
-// }
+Future<void> deleteLocalCategory(String uid) async {
+  final db = await getLocalDatabase();
+  await db.delete(
+    'categorias',
+    where: 'uid = ?',
+    whereArgs: [uid],
+  );
+  print('Categoría "$uid" eliminada correctamente.');
+}
