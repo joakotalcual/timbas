@@ -29,10 +29,10 @@ class OrderScreen extends StatelessWidget {
                 crossAxisSpacing: 8.0,
                 mainAxisSpacing: 8.0,
               ),
-              itemCount: categorias.length,
+              itemCount: 2,
               itemBuilder: (context, index) {
-                final categoria = categorias[index];
-                return _buildGridItem(context, categoria, cartId);
+                final categoria = '';
+                return _buildGridItem(context, categoria as Categoria?, cartId);
               },
             ),
           ),
@@ -44,13 +44,13 @@ class OrderScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, Categoria categoria, String cartId) {
+  Widget _buildGridItem(BuildContext context, Categoria? categoria, String cartId) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => CategoryDetailScreen(
-              categoria: categoria,
+              categoria: categoria!,
               tipoPedido: tipoPedido,
               mesa: mesa,
               cartId: cartId,
@@ -64,7 +64,7 @@ class OrderScreen extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
               child: Image.asset(
-                'assets/images/${categoria.nombre.toLowerCase().replaceAll(' ', '_')}.png',
+                'assets/images/${categoria?.nombre.toLowerCase().replaceAll(' ', '_')}.png',
                 fit: BoxFit.cover,
                 height: 120,
                 width: double.infinity,
@@ -73,7 +73,7 @@ class OrderScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                categoria.nombre,
+                categoria!.nombre,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

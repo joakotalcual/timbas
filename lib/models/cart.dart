@@ -4,8 +4,9 @@ class CartItem {
   final Producto producto;
   final String categoria;
   int cantidad;
+  final String comentario;
 
-  CartItem({required this.producto, required this.categoria, this.cantidad = 1});
+  CartItem({required this.producto, required this.categoria, this.cantidad = 1, this.comentario=''});
 
   double get totalPrice {
     return producto.precio * cantidad;

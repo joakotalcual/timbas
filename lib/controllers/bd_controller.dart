@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:timbas/helpers/validated.dart';
+import 'package:timbas/models/products.dart';
 import 'package:timbas/services/database/firebase_services.dart';
 import 'package:timbas/services/database/sqlite.dart';
 import 'package:timbas/views/dialogCustom/show_confirm_dialog.dart';
@@ -71,6 +72,24 @@ Stream<List<Map<String, dynamic>>> getLocalCategoriesStream() async* {
   }
 }
 
+Future<List<Categoria>> getLocalCategoriesFuture() async {
+  final localDb = await getLocalDatabase();
+  final List<Map<String, dynamic>> queryResult = await localDb.query(
+    'categorias',
+    columns: ['uid', 'nombre'],
+    orderBy: 'nombre DESC',
+  );
+
+  // Mapea los resultados para crear una lista de objetos `Categoria`
+  return queryResult.map((row) {
+    return Categoria(
+      id: row['uid'],
+      nombre: row['nombre'],
+    );
+  }).toList();
+}
+
+
 Stream<List<Map<String, dynamic>>> getLocalProductsStream() async* {
   await syncProductsFromFirestore();
   final localDb = await getLocalDatabase();
@@ -79,6 +98,21 @@ Stream<List<Map<String, dynamic>>> getLocalProductsStream() async* {
     await Future.delayed(const Duration(seconds: 5)); // Espera 5 segundos antes de la siguiente consulta
   }
 }
+
+Future<List<Producto>> getLocalProductsFuture(String idCategoria) async {
+  final localDb = await getLocalDatabase();
+  final List<Map<String, dynamic>> queryResult = await localDb.query(
+    'productos',
+    where: 'categorias = ?',
+    whereArgs: [idCategoria],
+    orderBy: 'nombre DESC',
+  );
+
+  // Mapea los resultados para crear una lista de objetos `Producto`
+  return queryResult.map((row) => Producto.fromMap(row)).toList();
+}
+
+
 
 Future<bool> hasInternetConnection() async {
   try {
@@ -144,6 +178,7 @@ Future<void> updateCategorieController(BuildContext context, String uid, String 
         // Elimina la categoría de la base de datos en línea y local
         await deleteCategories(uid);
         await deleteLocalCategory(uid);
+        Navigator.pop(context);
       }
   }
 }

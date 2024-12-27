@@ -38,27 +38,27 @@ class Cart with ChangeNotifier {
   }
 
   // Añade un ítem al carrito
-  void addItem(String id, Producto producto, String nombreCategoria) {
+  void addItem(String id, Producto producto, String nombreCategoria, String comentario) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id,
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria),
+      (item) => item.producto.id == producto.id && item.comentario == comentario,
+      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario),
     );
 
     if (cart.contains(existingItem)) {
       existingItem.incrementarCantidad();
     } else {
-      cart.add(CartItem(producto: producto, categoria: nombreCategoria));
+      cart.add(CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario));
     }
     notifyListeners();
   }
 
   // Elimina un ítem del carrito
-  void removeItem(String id, Producto producto, String nombreCategoria) {
+  void removeItem(String id, Producto producto, String nombreCategoria, String comentario) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id,
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria),
+      (item) => item.producto.id == producto.id && item.comentario == comentario,
+      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario),
     );
 
     if (cart.contains(existingItem)) {

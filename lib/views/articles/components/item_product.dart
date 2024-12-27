@@ -4,8 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timbas/controllers/bd_controller.dart';
 import 'dart:io';
 
-import 'package:timbas/services/database/firebase_services.dart';
-import 'package:timbas/services/database/sqlite.dart';
 
 class ItemProduct extends StatefulWidget {
   final bool isEdit;

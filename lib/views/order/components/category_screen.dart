@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:timbas/controllers/bd_controller.dart';
 import 'package:timbas/models/products.dart';
 import 'package:timbas/views/order/components/item_details.dart';
 
 class CategoryDetailScreen extends StatelessWidget {
   final Categoria categoria;
-  final String tipoPedido;
+  final String? tipoPedido;
   final String? mesa;
   final String cartId; // Añade el cartId
 
   const CategoryDetailScreen({
     super.key,
     required this.categoria,
-    required this.tipoPedido,
+    this.tipoPedido,
     this.mesa,
     required this.cartId,
   });
@@ -22,34 +23,41 @@ class CategoryDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(categoria.nombre),
       ),
-      body: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-        ),
-        itemCount: categoria.productos.length,
-        itemBuilder: (context, index) {
-          final producto = categoria.productos[index];
-          return _buildGridItem(context, producto, categoria.nombre, cartId);
+      body: FutureBuilder(
+        future: getLocalProductsFuture(categoria.id),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final products = snapshot.data!;
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                crossAxisSpacing: 8.0,
+                mainAxisSpacing: 8.0,
+              ),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return _buildGridItem(context, product, categoria.nombre, cartId);
+              },
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildGridItem(BuildContext context, Producto producto,
-      String categoriaNombre, String cartId) {
+  Widget _buildGridItem(
+      BuildContext context, Producto producto, String categoriaNombre, String carID) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ItemDetailScreen(
-              producto: producto,
-              categoria: categoriaNombre,
-              tipoPedido: tipoPedido,
-              mesa: mesa,
-              cartId: cartId, // Pasa el cartId
-            ),
+                producto: producto, categoria: categoriaNombre, cartId: carID,),
           ),
         );
       },
@@ -69,8 +77,9 @@ class CategoryDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 producto.nombre,
+                maxLines: 2,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),

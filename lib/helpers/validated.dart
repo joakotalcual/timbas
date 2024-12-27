@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 // Validador para el nombre del producto
 bool isValidName(String name) {

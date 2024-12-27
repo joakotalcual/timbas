@@ -6,7 +6,7 @@ import 'package:timbas/views/cart/components/cart_notifier.dart';
 class ItemDetailScreen extends StatefulWidget {
   final Producto producto;
   final String categoria;
-  final String tipoPedido;
+  final String? tipoPedido;
   final String? mesa;
   final String cartId; // Añade el cartId
 
@@ -14,7 +14,7 @@ class ItemDetailScreen extends StatefulWidget {
     super.key,
     required this.producto,
     required this.categoria,
-    required this.tipoPedido,
+    this.tipoPedido,
     this.mesa,
     required this.cartId, // Pasa el cartId
   });
@@ -25,6 +25,7 @@ class ItemDetailScreen extends StatefulWidget {
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
   int _cantidad = 1;
+  TextEditingController commentController = TextEditingController();
 
   void _incrementarCantidad() {
     setState(() {
@@ -41,10 +42,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   void _agregarAlCarrito() {
+    String comment = commentController.text;
     final cart = Provider.of<Cart>(context, listen: false);
     for (int i = 0; i < _cantidad; i++) {
       cart.addItem(
-          widget.cartId, widget.producto, widget.categoria); // Usa el cartId
+          widget.cartId, widget.producto, widget.categoria, comment); // Usa el cartId
     }
     Navigator.pop(context); // Cierra la pantalla de detalles del producto
     Navigator.pop(context); // Cierra la pantalla de detalles del producto
@@ -52,72 +54,108 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.categoria),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 206.0),
-            Text(
-              widget.producto.nombre,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              '\$${widget.producto.precio.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              widget.producto.descripcion,
-              style: const TextStyle(
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 156.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: _disminuirCantidad,
-                  icon: const Icon(Icons.remove_circle_outline),
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(widget.categoria),
+    ),
+    body: GestureDetector(
+      onTap: () {
+        FocusScope.of(context).requestFocus(FocusNode());
+      },
+      child: SingleChildScrollView( // Envuelve el contenido para hacerlo desplazable
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "${widget.categoria} \n ${widget.producto.nombre}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(
-                  '$_cantidad',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+              ),
+              Text(
+                '\$${widget.producto.precio.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: _disminuirCantidad,
+                    icon: const Icon(Icons.remove_circle_outline),
                   ),
-                ),
-                IconButton(
-                  onPressed: _incrementarCantidad,
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton.icon(
-              onPressed: _agregarAlCarrito,
-              icon: const Icon(Icons.shopping_cart),
-              label: const Text('Agregar al carrito'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32.0, vertical: 12.0),
+                  Text(
+                    '$_cantidad',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _incrementarCantidad,
+                    icon: const Icon(Icons.add_circle_outline),
+                  ),
+                ],
               ),
-            ),
-          ],
+              SizedBox(
+                width: 550,
+                child: TextField(
+                  controller: commentController,
+                  decoration: InputDecoration(
+                    labelText: 'Comentarios',
+                    hintText: 'Ejemplo: sin fresa, sin mango, sin chocolate, etc',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color:
+                            Color(0xFFE57373), // Rojo sandía para el borde enfocado
+                        width: 2.0,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12.0,
+                      horizontal: 16.0,
+                    ),
+                  ),
+                  maxLines: 4,
+                  keyboardType: TextInputType.text,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              ElevatedButton.icon(
+                onPressed: _agregarAlCarrito,
+                icon: const Icon(Icons.shopping_cart),
+                label: const Text(
+                  'Agregar al carrito',
+                  style: TextStyle(color: Color(0xFF424242)),
+                ),
+                style: ElevatedButton.styleFrom(
+                  iconColor: const Color(0xFF424242),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 40.0, vertical: 16.0),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    side: const BorderSide(color: Color(0xFFE57373), width: 2.0),
+                  ),
+                  elevation: 3.0,
+                  shadowColor: Colors.red.withOpacity(0.2),
+                ),
+              ),
+              const SizedBox(height: 32.0),
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

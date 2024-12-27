@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
@@ -94,7 +93,7 @@ class ProductsScreen extends StatelessWidget {
                             builder: (context) => ItemProduct(
                               isEdit: true,
                               active: active,
-                              category: products[0]['categorias'],
+                              category: products[index]['categorias'],//Bug corregido
                               image: products[index]['imagen'],
                               name: products[index]['nombre'],
                               price: products[index]['precio'],
