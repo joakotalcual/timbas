@@ -36,7 +36,7 @@ class CategoriesScreen extends StatelessWidget {
                 Expanded(
                   child: GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                      crossAxisCount: 4,
                       crossAxisSpacing: 8.0,
                       mainAxisSpacing: 8.0,
                     ),
@@ -46,8 +46,6 @@ class CategoriesScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: 16.0),
-                const SizedBox(height: 16.0),
               ],
             );
           }
@@ -68,7 +66,7 @@ class CategoriesScreen extends StatelessWidget {
           });
         },
         backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white,),
       ),
     );
   }

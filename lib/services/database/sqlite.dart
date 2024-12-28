@@ -81,6 +81,7 @@ Future<void> addLocalProduct(String uid, String name, String image, String categ
   await db.insert(
     'productos',
     {
+      'uid' : uid,
       'nombre' : name,
       'imagen' : image,
       'categorias' : category,

@@ -41,7 +41,12 @@ class CategoryDetailScreen extends StatelessWidget {
               itemCount: products.length,
               itemBuilder: (context, index) {
                 final product = products[index];
-                return _buildGridItem(context, product, categoria.nombre, cartId);
+                if (product.activo) {
+                  return _buildGridItem(
+                      context, product, categoria.nombre, cartId);
+                } else {
+                  return SizedBox.shrink(); // Retorna un widget vacío.
+                }
               },
             ),
           );
@@ -50,14 +55,17 @@ class CategoryDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGridItem(
-      BuildContext context, Producto producto, String categoriaNombre, String carID) {
+  Widget _buildGridItem(BuildContext context, Producto producto,
+      String categoriaNombre, String carID) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ItemDetailScreen(
-                producto: producto, categoria: categoriaNombre, cartId: carID,),
+              producto: producto,
+              categoria: categoriaNombre,
+              cartId: carID,
+            ),
           ),
         );
       },

@@ -16,13 +16,13 @@ Future<bool> showConfirmationDialog(
           onPressed: () {
             Navigator.of(context).pop(true); // Confirma la acción
           },
-          child: const Text('Sí'),
+          child: const Text('Sí', style: TextStyle(color: Colors.redAccent),),
         ),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop(false); // Cancela la acción
           },
-          child: const Text('No'),
+          child: const Text('No', style: TextStyle(color: Colors.black54)),
         ),
       ],
     ),

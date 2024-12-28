@@ -44,7 +44,7 @@ class _ItemCategorieState extends State<ItemCategorie> {
         actions: [
           TextButton(
             onPressed: () async {
-              String name = _nameController.text;
+              String name = _nameController.text.toUpperCase();
               // Implementar lógica de guardado aquí
               if (widget.isEdit) {
                 // Actualiza en Firebase y en la base de datos local
@@ -84,6 +84,9 @@ class _ItemCategorieState extends State<ItemCategorie> {
                     },
                     child: const Text(
                       "ELIMINAR CATEGORÍA",
+                      style: TextStyle(
+                        color: Colors.black
+                      ),
                     ),
                   )
                 : const SizedBox.shrink(),

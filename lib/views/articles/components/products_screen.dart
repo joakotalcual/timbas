@@ -68,7 +68,7 @@ class ProductsScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   bool active = products[index]['activo'] == 1; // Ajuste para convertir 1/0 a bool
                   return Container(
-                    color: const Color.fromARGB(132, 226, 255, 191),
+                    color: active ?const Color.fromARGB(132, 226, 255, 191) : Colors.grey.shade200,
                     child: ListTile(
                       leading: Icon(
                         active ? Icons.check : Icons.report,
@@ -125,7 +125,10 @@ class ProductsScreen extends StatelessWidget {
           );
         },
         backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
     );
   }

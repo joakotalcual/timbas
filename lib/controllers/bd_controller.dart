@@ -190,13 +190,13 @@ Future<void> updateProductController(BuildContext context, String uid, String na
       if(isValidName(name)){
         if(isValidCategory(selectedCategory)){
           if(isValidPrice(price)){
-            if(isValidImage(assetImage)){
+            // if(isValidImage(assetImage)){
               await updateProducts(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable);
               await updateLocalProduct(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable ? 1 : 0);
               Navigator.pop(context);
-            }else{
-              showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
-            }
+            // }else{
+            //   showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
+            // }
           }else{
             showDialogCustom(context, 'PRECIO INCORRECTO', 'FAVOR DE PONER UN PRECIO CORRECTO.');
           }
@@ -211,13 +211,13 @@ Future<void> updateProductController(BuildContext context, String uid, String na
       if(isValidName(name)){
         if(isValidCategory(selectedCategory)){
           if(isValidPrice(price)){
-            if(isValidImage(assetImage)){
+            // if(isValidImage(assetImage)){
               String uid = await addProducts(name, assetImage, selectedCategory, double.parse(price), isAvailable);
               await addLocalProduct(uid, name, assetImage, selectedCategory, double.parse(price), isAvailable ? 1 : 0);
               Navigator.pop(context);
-            }else{
-              showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
-            }
+            // }else{
+            //   showDialogCustom(context, 'SELECCIONAR IMAGEN', 'FAVOR DE ESCOGER UNA IMAGEN.');
+            // }
           }else{
             showDialogCustom(context, 'PRECIO INCORRECTO', 'FAVOR DE PONER UN PRECIO CORRECTO.');
           }

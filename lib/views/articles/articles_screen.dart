@@ -22,9 +22,14 @@ class ArticlesScreen extends StatelessWidget {
           },
           child: const Row(
             children: [
-              Icon(Icons.list),
+              Icon(Icons.list, color: Colors.black,),
               SizedBox(width: 40,),
-              Text("Artículos")
+              Text(
+                "Artículos",
+                style: TextStyle(
+                  color: Colors.black
+                ),
+              )
             ],
           ),
         ),
@@ -39,9 +44,14 @@ class ArticlesScreen extends StatelessWidget {
           },
           child: const Row(
             children: [
-              Icon(Icons.view_comfy_alt_outlined),
+              Icon(Icons.view_comfy_alt_outlined, color: Colors.black,),
               SizedBox(width: 40,),
-              Text("Categorías")
+              Text(
+                "Categorías",
+                style: TextStyle(
+                  color: Colors.black
+                ),
+              ),
             ],
           ),
         ),
@@ -49,9 +59,14 @@ class ArticlesScreen extends StatelessWidget {
           onPressed: (){},
           child: const Row(
             children: [
-              Icon(Icons.sell),
+              Icon(Icons.sell, color: Colors.black,),
               SizedBox(width: 40,),
-              Text("Descuentos")
+              Text(
+                "Descuentos",
+                style: TextStyle(
+                  color: Colors.black
+                ),
+              ),
             ],
           ),
         ),

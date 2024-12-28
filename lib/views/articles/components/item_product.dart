@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:timbas/controllers/bd_controller.dart';
-import 'dart:io';
 
 
 class ItemProduct extends StatefulWidget {
@@ -33,7 +32,6 @@ class _ItemProductState extends State<ItemProduct> {
   String? _selectedCategory;
   late TextEditingController _priceController;
   late TextEditingController _nameController;
-  File? _selectedImage;
   String? _assetImage; // Variable para manejar la imagen de assets
   String? _imagePath;
 
@@ -56,9 +54,10 @@ class _ItemProductState extends State<ItemProduct> {
       // Cargar imagen desde assets si está disponible
       if (widget.image != null && widget.image!.startsWith('assets/')) {
         _assetImage = widget.image;
-      }else if(widget.image != null){
-        _assetImage = widget.image;
       }
+      // else if(widget.image != null){
+      //   _assetImage = widget.image;
+      // }
     } else {
       _isAvailable = true;
     }
@@ -78,7 +77,6 @@ class _ItemProductState extends State<ItemProduct> {
 
     if (image != null) {
       setState(() {
-        _selectedImage = File(image.path);
         _imagePath = image.path;
         _assetImage = null; // Limpiar la imagen de assets cuando se selecciona una nueva imagen
       });
@@ -168,19 +166,14 @@ class _ItemProductState extends State<ItemProduct> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                 ),
-                child: _selectedImage != null
-                    ? Image.file(
-                        _selectedImage!,
-                        fit: BoxFit.cover,
-                      )
-                    : _assetImage != null
+                child: _assetImage != null
                         ? Image.asset(
                             _assetImage!,
                             fit: BoxFit.cover,
                           )
                         : const Center(
                             child: Text(
-                              'Toca para seleccionar una imagen',
+                              'Toca para seleccionar una imagen(No disponible)',
                               style: TextStyle(color: Colors.grey),
                             ),
                           ),
@@ -221,7 +214,7 @@ class _ItemProductState extends State<ItemProduct> {
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Icon(Icons.delete), Text("ELIMINAR ARTICULO")],
+                      children: [Icon(Icons.delete, color: Colors.black), Text("ELIMINAR ARTICULO", style: TextStyle(color: Colors.black),)],
                     ),
                   )
                 : const SizedBox.shrink(),
