@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timbas/controllers/bd_controller.dart';
+import 'package:timbas/helpers/responsive.dart';
 import 'package:timbas/models/products.dart';
 import 'package:timbas/views/order/components/item_details.dart';
 
@@ -19,6 +20,10 @@ class CategoryDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var responsive = Responsive(context);
+    bool isLandscape = responsive.isLandscape;
+    bool isSmallScreen = responsive.isSmallScreen;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(categoria.nombre),
@@ -30,23 +35,20 @@ class CategoryDetailScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           final products = snapshot.data!;
+          // Filtramos los productos activos
+          final activeProducts = products.where((product) => product.activo).toList();
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isLandscape && !isSmallScreen ? 5 : 3,
                 crossAxisSpacing: 8.0,
                 mainAxisSpacing: 8.0,
               ),
-              itemCount: products.length,
+              itemCount: activeProducts.length,
               itemBuilder: (context, index) {
-                final product = products[index];
-                if (product.activo) {
-                  return _buildGridItem(
-                      context, product, categoria.nombre, cartId);
-                } else {
-                  return SizedBox.shrink(); // Retorna un widget vacío.
-                }
+                final product = activeProducts[index];
+                return _buildGridItem(context, product, categoria.nombre, cartId);
               },
             ),
           );
@@ -57,6 +59,11 @@ class CategoryDetailScreen extends StatelessWidget {
 
   Widget _buildGridItem(BuildContext context, Producto producto,
       String categoriaNombre, String carID) {
+    var responsive = Responsive(context);
+    bool isLandscape = responsive.isLandscape;
+    bool isSmallScreen = responsive.isSmallScreen;
+    double fontTitle = responsive.fontSizeTitle;
+
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -72,22 +79,18 @@ class CategoryDetailScreen extends StatelessWidget {
       child: Card(
         child: Column(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
+              Image.asset(
                 producto.imagen,
-                fit: BoxFit.cover,
-                height: 120,
-                width: double.infinity,
+                fit: BoxFit.contain,
+                height: isLandscape && !isSmallScreen ? 120 : 80,
               ),
-            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 producto.nombre,
                 maxLines: 2,
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: fontTitle,
                   fontWeight: FontWeight.bold,
                 ),
               ),

@@ -31,7 +31,7 @@ class OrderScreen extends StatelessWidget {
               ),
               itemCount: 2,
               itemBuilder: (context, index) {
-                final categoria = '';
+                const categoria = '';
                 return _buildGridItem(context, categoria as Categoria?, cartId);
               },
             ),
@@ -50,7 +50,7 @@ class OrderScreen extends StatelessWidget {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => CategoryDetailScreen(
-              categoria: categoria!,
+              categoria: categoria,
               tipoPedido: tipoPedido,
               mesa: mesa,
               cartId: cartId,

@@ -1,0 +1,145 @@
+import 'dart:typed_data';
+
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timbas/views/dialog_custom/show_dialog.dart';
+import 'package:esc_pos_utils/esc_pos_utils.dart';
+
+class Printer {
+  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
+
+  // Almacenar la dirección de la impresora
+  Future<void> savePrinterAddress(String address) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('printer_address', address);
+  }
+
+  // Recuperar la dirección de la impresora
+  Future<String?> getPrinterAddress() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('printer_address');
+  }
+
+  // Reconectar automáticamente
+  Future<void> reconnectPrinter(BuildContext context) async {
+    final address = await getPrinterAddress();
+    if (address != null) {
+      try {
+        List<BluetoothDevice> devices = await bluetooth.getBondedDevices();
+        BluetoothDevice? device;
+
+        try {
+          device = devices.firstWhere((d) => d.address == address);
+        } catch (_) {
+          showDialogCustom(context, 'La impresora no está emparejada', '');
+          return;
+        }
+
+        await bluetooth.connect(device);
+      } catch (e) {
+        showDialogCustom(context, 'Error al reconectar la impresora',
+            'Verifique que este encendida o con carga.');
+        print('Error al reconectar la impresora: $e');
+      }
+    } else {
+      showDialogCustom(
+          context, 'Error', 'No se ha conectado ninguna impresora.');
+    }
+  }
+
+  // Verificar la conexión antes de imprimir
+  Future<bool?> ensureConnection(BuildContext context) async {
+    bool? connected = await bluetooth.isConnected;
+    if (connected == null || !connected) {
+      await reconnectPrinter(context);
+    } else {
+      print('Ya está conectado');
+      return true;
+    }
+    return null;
+  }
+
+  Future<void> printTicket(List items) async {
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm58, profile);
+
+    List<int> bytes = [];
+
+    // Obtener fecha y hora actuales
+    final now = DateTime.now();
+    final formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final formattedDate = formatter.format(now);
+
+    // Encabezado del ticket
+    // bytes += generator.text(
+    //   '¡Gracias por tu compra!',
+    //   styles: const PosStyles(align: PosAlign.center, bold: true),
+    // );
+    bytes += generator.text('Fecha: $formattedDate');
+    bytes += generator.text('-------------------------------');
+
+    // Detalle de los ítems
+    for (var item in items) {
+      final nombre = sanitizeText(item.producto.nombre);
+      final categoria = sanitizeText(item.categoria);
+      final cantidad = item.cantidad;
+      final comentario = sanitizeText(item.comentario);
+
+      bytes += generator.text(
+        '$categoria de $nombre',
+        styles: const PosStyles(height: PosTextSize.size2)
+      );
+      bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
+      if (comentario != '' && comentario.isNotEmpty) {
+        bytes += generator.text('Comentarios: $comentario', styles: const PosStyles(height: PosTextSize.size2));  // Ancho aumentado));
+      }
+      bytes += generator.text('-------------------------------');
+    }
+
+    // Total
+    double total = items.fold(
+        0, (sum, item) => sum + item.producto.precio * item.cantidad);
+    bytes += generator.text(
+      'Total: \$${total.toStringAsFixed(2)}',
+      styles: const PosStyles(align: PosAlign.right, bold: true),
+    );
+
+    // Espacios y corte del ticket
+    bytes += generator.feed(4);
+    //bytes += generator.cut();
+
+    // Convertir List<int> a Uint8List
+    Uint8List byteData = Uint8List.fromList(bytes);
+
+    // Enviar los datos a la impresora
+    bluetooth.writeBytes(byteData);
+  }
+
+  //Convertir el string por no aceptar utf-8
+  String sanitizeText(String input) {
+  final Map<String, String> replacements = {
+    'ñ': 'n',
+    'Ñ': 'N',
+    'á': 'a',
+    'Á': 'A',
+    'é': 'e',
+    'É': 'E',
+    'í': 'i',
+    'Í': 'I',
+    'ó': 'o',
+    'Ó': 'O',
+    'ú': 'u',
+    'Ú': 'U',
+  };
+
+  String sanitized = input;
+  replacements.forEach((key, value) {
+    sanitized = sanitized.replaceAll(key, value);
+  });
+
+  return sanitized;
+}
+
+}

@@ -6,8 +6,8 @@ import 'package:timbas/helpers/validated.dart';
 import 'package:timbas/models/products.dart';
 import 'package:timbas/services/database/firebase_services.dart';
 import 'package:timbas/services/database/sqlite.dart';
-import 'package:timbas/views/dialogCustom/show_confirm_dialog.dart';
-import 'package:timbas/views/dialogCustom/show_dialog.dart';
+import 'package:timbas/views/dialog_custom/show_confirm_dialog.dart';
+import 'package:timbas/views/dialog_custom/show_dialog.dart';
 
 Future<void> syncCategoriesFromFirestore() async {
   try {
@@ -36,11 +36,8 @@ Future<void> syncCategoriesFromFirestore() async {
 
 Future<void> syncProductsFromFirestore() async {
   try {
-    final lastSyncDate = await getLastSyncDate();
     final currentDate = DateTime.now();
-
     // Solo sincroniza si no hay fecha de sincronización o si ha pasado más de una hora desde la última sincronización
-    if (lastSyncDate == null || currentDate.difference(lastSyncDate).inDays > 30) {
       List products = await getProducts(); // Obtener productos desde Firestore
 
       final db = await getLocalDatabase();
@@ -57,7 +54,6 @@ Future<void> syncProductsFromFirestore() async {
       }
       await batch.commit();
       await setLastSyncDate(currentDate); // Actualizar la fecha de sincronización
-    }
   } catch (e) {
     print('Error sincronizando productos: $e');
   }
@@ -233,6 +229,7 @@ Future<void> updateProductController(BuildContext context, String uid, String na
         // Elimina la categoría de la base de datos en línea y local
         await deleteProducts(uid);
         await deleteLocalProducts(uid);
+        Navigator.pop(context);
       }
   }
 }

@@ -24,6 +24,7 @@ class ItemProduct extends StatefulWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _ItemProductState createState() => _ItemProductState();
 }
 
@@ -55,9 +56,9 @@ class _ItemProductState extends State<ItemProduct> {
       if (widget.image != null && widget.image!.startsWith('assets/')) {
         _assetImage = widget.image;
       }
-      // else if(widget.image != null){
-      //   _assetImage = widget.image;
-      // }
+      else if(widget.image != null){
+        _assetImage = widget.image;
+      }
     } else {
       _isAvailable = true;
     }
@@ -72,8 +73,8 @@ class _ItemProductState extends State<ItemProduct> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -210,7 +211,7 @@ class _ItemProductState extends State<ItemProduct> {
                 ? TextButton(
                     onPressed: () async {
                       // funcionalidad de eliminación aquí
-                      await updateProductController(context, widget.uid!, '', _assetImage!, _selectedCategory!, _priceController.text, _isAvailable, 2);
+                      await updateProductController(context, widget.uid!, '', '', _selectedCategory!, _priceController.text, _isAvailable, 2);
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,

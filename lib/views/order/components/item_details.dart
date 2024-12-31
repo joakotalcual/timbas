@@ -116,7 +116,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(
                         color:
-                            Color(0xFFE57373), // Rojo sandía para el borde enfocado
+                            Color(0xFF424242),
                         width: 2.0,
                       ),
                     ),
@@ -144,10 +144,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    side: const BorderSide(color: Color(0xFFE57373), width: 2.0),
+                    side: const BorderSide(color: Color(0xFF424242), width: 2.0),
                   ),
                   elevation: 3.0,
-                  shadowColor: Colors.red.withOpacity(0.2),
+                  shadowColor: Colors.black.withOpacity(0.2),
                 ),
               ),
               const SizedBox(height: 32.0),

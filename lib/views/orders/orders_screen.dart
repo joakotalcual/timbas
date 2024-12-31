@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timbas/models/printer.dart';
 import 'package:timbas/views/cart/components/cart_notifier.dart';
 import 'package:timbas/views/orders/components/actived_screen.dart';
 import 'package:timbas/views/orders/components/completed_screen.dart';
@@ -63,9 +64,14 @@ class ActiveOrdersTab extends StatelessWidget {
     );
   }
 
-  void _imprimirTicket(BuildContext context, Order order) {
-    // Implementa la funcionalidad para imprimir el ticket aquí
-    // Después de imprimir, puedes mover el pedido a la lista de pedidos finalizados
-    Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+  // Implementa la funcionalidad para imprimir el ticket
+  void _imprimirTicket(BuildContext context, Order order) async {
+    bool? connected = await Printer().ensureConnection(context);
+    if(connected != null && connected){
+      final cart = Provider.of<Cart>(context);
+      final items = cart.getCart(order.id); // Obtiene los ítems del pedido
+      await Printer().printTicket(items);
+      Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+    }
   }
 }

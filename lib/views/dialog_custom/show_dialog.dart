@@ -15,7 +15,7 @@ bool showDialogCustom(BuildContext context, String title, String message) {
             onPressed: () {
               Navigator.of(context).pop(); // Cierra el diálogo
             },
-            child: const Text('Cerrar'),
+            child: const Text('Cerrar', style: TextStyle(color: Colors.black87)),
           ),
         ],
       );
