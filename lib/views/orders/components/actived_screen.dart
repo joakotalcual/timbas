@@ -20,13 +20,27 @@ class OrderDetailScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          ElevatedButton(
+          order.total > 1 ? ElevatedButton(
+            style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all<Color>(Colors.black),
+                backgroundColor: WidgetStateProperty.all<Color>(Colors.white70),
+              ),
             onPressed: () {
               _showConfirmationDialog(context, order.id, null);
-              Navigator.pop(context);
+              //Navigator.pop(context);
             },
-            child: const Text('ELIMINAR CUENTA'),
-          ),
+            child: SizedBox(
+                    width: 150,
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.delete, color: Colors.black54),
+                const SizedBox(width: 8),
+                Text('ELIMINAR PEDIDO', style: TextStyle(color: Colors.red[600]),),
+              ],
+            ),
+            ),
+          ) : const SizedBox.shrink(),
           Expanded(
             child: ListView.builder(
               itemCount: items.length,
@@ -40,8 +54,8 @@ class OrderDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('CANTIDAD: ${cartItem.cantidad}'),
-                      if (cartItem.comentario != null &&
-                          cartItem.comentario!.isNotEmpty)
+                      if (cartItem.comentario != '' &&
+                          cartItem.comentario.isNotEmpty)
                         Text('Comentarios: ${cartItem.comentario}'),
                     ],
                   ),
@@ -71,7 +85,7 @@ class OrderDetailScreen extends StatelessWidget {
                                 order.id,
                                 cartItem.producto,
                                 cartItem.categoria,
-                                cartItem.comentario ?? '');
+                                cartItem.comentario);
                           },
                         ),
                       ],
@@ -88,15 +102,34 @@ class OrderDetailScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              // Implementa la funcionalidad para imprimir el ticket aquí
-              await Printer().printTicket(items);
-              Provider.of<Cart>(context, listen: false)
-                  .markOrderAsCompleted(order.id);
-            },
-            child: const Text('Imprimir Ticket'),
-          ),
+          order.total > 1 ? SizedBox(
+            width: 200,
+            child: ElevatedButton(
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all<Color>(Colors.black),
+                backgroundColor: WidgetStateProperty.all<Color>(Colors.white70),
+              ),
+              onPressed: () async {
+                // Implementa la funcionalidad para imprimir el ticket aquí
+                if(order.total>1){
+                  bool? connected = await Printer().ensureConnection(context);
+                  if(connected != null && connected){
+                    await Printer().printTicket(items);
+                    Provider.of<Cart>(context, listen: false)
+                      .markOrderAsCompleted(order.id);
+                  }
+                }
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.print),
+                  SizedBox(width: 8),
+                  Text('Imprimir Ticket'),
+                ],
+              ),
+            ),
+          ) : const SizedBox.shrink(),
           const SizedBox(
             height: 8,
           ),
@@ -105,46 +138,58 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  void _showConfirmationDialog(
-      BuildContext context, String cartId, CartItem? cartItem) {
+  Future<bool> _showConfirmationDialog  (
+      BuildContext context, String cartId, CartItem? cartItem) async {
     // Determina si estamos eliminando un artículo o el carrito entero
     final isRemovingItem = cartItem != null;
-
-    showDialog(
+    bool option = false;
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmación'),
         content: Text(
           isRemovingItem
               ? '¿Estás seguro de que deseas eliminar "${cartItem.producto.nombre}" del carrito?'
-              : '¿Estás seguro de que deseas eliminar todos los productos del carrito? $cartId',
+              : '¿Estás seguro de que deseas eliminar todos los productos del carrito? $cartId-1',
         ),
         actions: [
           TextButton(
             onPressed: () {
+              final cart = Provider.of<Cart>(context, listen: false);
               Navigator.of(context).pop(); // Cierra el diálogo
 
               // Realiza la acción dependiendo de si es un ítem o el carrito completo
               if (isRemovingItem) {
-                Provider.of<Cart>(context, listen: false).removeItem(
+                cart.removeItem(
                   cartId,
                   cartItem.producto,
                   cartItem.categoria,
                   cartItem.comentario,
                 );
+                option = true;
+                if(cart.getTotalAmount(cartId) < 1){
+                  Navigator.of(context).pop(); // Solo cierra el diálogo
+                  Navigator.of(context).pop(); // Solo cierra el diálogo
+                }
               } else {
-                Provider.of<Cart>(context, listen: false).clear(cartId);
+                cart.clear(cartId);
+                option = true;
+                Navigator.of(context).pop(); // Solo cierra el diálogo
+                Navigator.of(context).pop(); // Solo cierra el diálogo
               }
             },
-            child: const Text('Sí'),
+            child: const Text('Sí', style: TextStyle(color: Colors.redAccent)),
           ),
           TextButton(
-            onPressed: () =>
-                Navigator.of(context).pop(), // Solo cierra el diálogo
-            child: const Text('No'),
+            onPressed: () {
+                option = false;
+                Navigator.of(context).pop(); // Solo cierra el diálogo
+            },
+            child: const Text('No', style: TextStyle(color: Colors.black87)),
           ),
         ],
       ),
     );
+    return option;
   }
 }

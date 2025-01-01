@@ -21,5 +21,9 @@ class CartItem {
       cantidad--;
     }
   }
+  @override
+  String toString() {
+    return 'CartItem(producto: ${producto.nombre}, categoria: $categoria, comentario: $comentario, cantidad: $cantidad, totalPrice: $totalPrice)';
+  }
 }
 

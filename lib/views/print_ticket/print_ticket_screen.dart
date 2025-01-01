@@ -119,50 +119,53 @@ class _PrintTicketScreenState extends State<PrintTicketScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (connectedPrinter != null && connectedPrinter != 'Error al verificar conexión')
-                Column(
-                  children: [
-                    Text("Impresora conectada: $connectedPrinter"),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _disconnectPrinter,
-                      child: const Text("Desconectar / Olvidar"),
-                    ),
-                  ],
-                )
-              else
-                const Text("No hay ninguna impresora conectada."),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (connectedPrinter != null && connectedPrinter != 'Error al verificar conexión')
+                  Column(
+                    children: [
+                      Text("Impresora conectada: $connectedPrinter"),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _disconnectPrinter,
+                        child: const Text("Desconectar / Olvidar"),
+                      ),
+                    ],
+                  )
+                else
+                  const Text("No hay ninguna impresora conectada."),
+                  const SizedBox(height: 20),
+                if (devices.isEmpty)
+                  const Text("No se encontraron dispositivos emparejados.")
+                else
+                  DropdownButton<BluetoothDevice>(
+                    hint: const Text("Selecciona una impresora"),
+                    value: selectedDevice,
+                    items: devices
+                        .map((device) => DropdownMenuItem(
+                              value: device,
+                              child: Text(device.name ?? "Sin nombre"),
+                            ))
+                        .toList(),
+                    onChanged: (device) {
+                      setState(() {
+                        selectedDevice = device;
+                      });
+                    },
+                  ),
                 const SizedBox(height: 20),
-              if (devices.isEmpty)
-                const Text("No se encontraron dispositivos emparejados.")
-              else
-                DropdownButton<BluetoothDevice>(
-                  hint: const Text("Selecciona una impresora"),
-                  value: selectedDevice,
-                  items: devices
-                      .map((device) => DropdownMenuItem(
-                            value: device,
-                            child: Text(device.name ?? "Sin nombre"),
-                          ))
-                      .toList(),
-                  onChanged: (device) {
-                    setState(() {
-                      selectedDevice = device;
-                    });
-                  },
-                ),
-              const SizedBox(height: 20),
-              if (devices.isNotEmpty)
-                ElevatedButton(
-                  onPressed: _connectToPrinter,
-                  child: const Text("Conectar"),
-                ),
-              const SizedBox(height: 20),
-              Text(statusMessage),
-            ],
+                if (devices.isNotEmpty)
+                  ElevatedButton(
+                    onPressed: _connectToPrinter,
+                    child: const Text("Conectar"),
+                  ),
+                const SizedBox(height: 20),
+                Text(statusMessage),
+              ],
+            ),
           ),
         ),
       ),

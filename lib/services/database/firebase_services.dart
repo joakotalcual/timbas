@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:timbas/views/cart/components/cart_notifier.dart' as cart;
 
 FirebaseFirestore db= FirebaseFirestore.instance;
 
@@ -86,3 +87,26 @@ Future<void> deleteProducts(String uid) async {
   // Elimina la categoría a Firestore
   await db.collection('productos').doc(uid).delete();
 }
+
+Future<void> addOrders(String uid, cart.Order order) async {
+  // Guardar el pedido en la colección "orders"
+  final orderDoc = db.collection('orders').doc(uid);
+  await orderDoc.set({
+    'id': order.id,
+    'total': order.total,
+    'mesa': order.mesa,
+    'timestamp': order.timestamp.toIso8601String(),
+  });
+
+  // Guardar los elementos del pedido en la subcolección "items"
+  for (var item in order.items) {
+    await orderDoc.collection('items').add({
+      'product_name': item.producto.nombre,
+      'category': item.categoria,
+      'comments': item.comentario,
+      'quantity': item.cantidad,
+      'total_price': item.totalPrice,
+    });
+  }
+}
+

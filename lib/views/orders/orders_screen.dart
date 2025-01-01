@@ -27,7 +27,6 @@ class OrdersScreen extends StatelessWidget {
           children: [
             ActiveOrdersTab(),
             CompletedOrdersTab(),
-            //ProductosScreen(),
           ],
         ),
       ),
@@ -50,10 +49,10 @@ class ActiveOrdersTab extends StatelessWidget {
         return ListTile(
           title: Text('Mesa: ${order.mesa ?? 'Para Llevar'}'),
           subtitle: Text('Total: \$${order.total.toStringAsFixed(2)}'),
-          trailing: IconButton(
+          trailing: order.total > 1 ? IconButton(
             icon: const Icon(Icons.print),
-            onPressed: () => _imprimirTicket(context, order),
-          ),
+            onPressed: () => order.total > 1 ? _imprimirTicket(context, order) : null,
+          ) : null,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => OrderDetailScreen(order: order),
@@ -66,12 +65,14 @@ class ActiveOrdersTab extends StatelessWidget {
 
   // Implementa la funcionalidad para imprimir el ticket
   void _imprimirTicket(BuildContext context, Order order) async {
-    bool? connected = await Printer().ensureConnection(context);
-    if(connected != null && connected){
-      final cart = Provider.of<Cart>(context);
-      final items = cart.getCart(order.id); // Obtiene los ítems del pedido
-      await Printer().printTicket(items);
-      Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+    if(order.total>1){
+      bool? connected = await Printer().ensureConnection(context);
+      if(connected != null && connected){
+        final cart = Provider.of<Cart>(context);
+        final items = cart.getCart(order.id); // Obtiene los ítems del pedido
+        await Printer().printTicket(items);
+        Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+      }
     }
   }
 }

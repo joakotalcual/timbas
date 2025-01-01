@@ -47,6 +47,7 @@ dependencies:
   rxdart: ^0.27.7
   blue_thermal_printer: ^1.2.3
   esc_pos_utils: ^1.1.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

@@ -23,7 +23,7 @@ class Printer {
   }
 
   // Reconectar automáticamente
-  Future<void> reconnectPrinter(BuildContext context) async {
+  Future<bool?> reconnectPrinter(BuildContext context) async {
     final address = await getPrinterAddress();
     if (address != null) {
       try {
@@ -34,18 +34,21 @@ class Printer {
           device = devices.firstWhere((d) => d.address == address);
         } catch (_) {
           showDialogCustom(context, 'La impresora no está emparejada', '');
-          return;
+          return null;
         }
 
         await bluetooth.connect(device);
+        return true;
       } catch (e) {
         showDialogCustom(context, 'Error al reconectar la impresora',
             'Verifique que este encendida o con carga.');
         print('Error al reconectar la impresora: $e');
+        return null;
       }
     } else {
       showDialogCustom(
           context, 'Error', 'No se ha conectado ninguna impresora.');
+      return null;
     }
   }
 
@@ -53,12 +56,11 @@ class Printer {
   Future<bool?> ensureConnection(BuildContext context) async {
     bool? connected = await bluetooth.isConnected;
     if (connected == null || !connected) {
-      await reconnectPrinter(context);
+      return await reconnectPrinter(context);
     } else {
       print('Ya está conectado');
       return true;
     }
-    return null;
   }
 
   Future<void> printTicket(List items) async {
@@ -77,7 +79,9 @@ class Printer {
     //   '¡Gracias por tu compra!',
     //   styles: const PosStyles(align: PosAlign.center, bold: true),
     // );
-    bytes += generator.text('Fecha: $formattedDate');
+
+    bytes += generator.feed(2);
+    bytes += generator.text('Fecha: $formattedDate', styles: const PosStyles(align: PosAlign.center));
     bytes += generator.text('-------------------------------');
 
     // Detalle de los ítems
@@ -87,11 +91,16 @@ class Printer {
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
 
+      // bytes += generator.text(
+      //   '$categoria DE $nombre',
+      //   styles: const PosStyles(align: PosAlign.left, height: PosTextSize.size2)
+      // );
+      // bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
       bytes += generator.text(
-        '$categoria de $nombre',
-        styles: const PosStyles(height: PosTextSize.size2)
+        '$cantidad $categoria de $nombre',
+        styles: const PosStyles(align: PosAlign.left, height: PosTextSize.size2)
       );
-      bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
+      // bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
       if (comentario != '' && comentario.isNotEmpty) {
         bytes += generator.text('Comentarios: $comentario', styles: const PosStyles(height: PosTextSize.size2));  // Ancho aumentado));
       }
@@ -106,6 +115,73 @@ class Printer {
       styles: const PosStyles(align: PosAlign.right, bold: true),
     );
 
+    // Espacios y corte del ticket
+    bytes += generator.feed(4);
+    //bytes += generator.cut();
+
+    // Convertir List<int> a Uint8List
+    Uint8List byteData = Uint8List.fromList(bytes);
+
+    // Enviar los datos a la impresora
+    bluetooth.writeBytes(byteData);
+  }
+
+  Future<void> printTicketClient(List items, String uid, double amount) async {
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm58, profile);
+
+    List<int> bytes = [];
+
+    bytes += generator.text('-------------------------------');
+    bytes += generator.text('Timbas y Frappes de la 50', styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text('-------------------------------');
+    // Obtener fecha y hora actuales
+    final now = DateTime.now();
+    final formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final formattedDate = formatter.format(now);
+
+    // Encabezado del ticket
+    bytes += generator.feed(2);
+
+    bytes += generator.text('Horario: Lunes-Domingo 5pm- 12am');
+    bytes += generator.text('Fecha: $formattedDate');
+    bytes += generator.text('Ticket: $uid');
+    bytes += generator.text('-------------------------------');
+
+    // Detalle de los ítems
+    for (var item in items) {
+      final nombre = sanitizeText(item.producto.nombre);
+      final categoria = sanitizeText(item.categoria);
+      final cantidad = item.cantidad;
+      final comentario = sanitizeText(item.comentario);
+
+      bytes += generator.text(
+        '$cantidad $categoria de $nombre',
+        styles: const PosStyles(align: PosAlign.left)
+      );
+      if (comentario != '' && comentario.isNotEmpty) {
+        bytes += generator.text('Comentarios: $comentario');  // Ancho aumentado));
+      }
+    }
+
+    // Total
+    double total = items.fold(
+        0, (sum, item) => sum + item.producto.precio * item.cantidad);
+    bytes += generator.text('-------------------------------');
+    bytes += generator.text(
+      'Total: \$${total.toStringAsFixed(2)}',
+      styles: const PosStyles(align: PosAlign.right, bold: true),
+    );
+    bytes += generator.text(
+      'Pago: \$${amount.toStringAsFixed(2)}',
+      styles: const PosStyles(align: PosAlign.right, bold: true),
+    );
+
+    bytes += generator.feed(2);
+    bytes += generator.text(
+      '¡Gracias por tu compra!',
+      styles: const PosStyles(align: PosAlign.center, bold: true),
+    );
     // Espacios y corte del ticket
     bytes += generator.feed(4);
     //bytes += generator.cut();

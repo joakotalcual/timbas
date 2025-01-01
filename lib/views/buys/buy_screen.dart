@@ -22,6 +22,7 @@ class _BuysState extends State<Buys> {
   void initState() {
     super.initState();
     _categoriesFuture = getLocalCategoriesFuture();
+    Provider.of<Cart>(context, listen: false).setMesa('mesa', 'mesa-1');
   }
 
   Future<void> _syncAndRefreshCategories() async {
@@ -34,8 +35,7 @@ class _BuysState extends State<Buys> {
 
   @override
   Widget build(BuildContext context) {
-    const cartId = 'mesa'; // Define el ID del carrito
-    Provider.of<Cart>(context, listen: false).setMesa(cartId, 'mesa-1');
+    const cartId = 'preparando'; // Define el ID del carrito
     var responsive = Responsive(context);
     bool isLandscape = responsive.isLandscape;
     bool isSmallScreen = responsive.isSmallScreen;

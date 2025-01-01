@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:timbas/models/cart.dart';
 import 'package:timbas/models/products.dart';
+import 'package:timbas/services/database/sqlite.dart';
+import 'package:uuid/uuid.dart';
 
 class Cart with ChangeNotifier {
   final Map<String, List<CartItem>> _carts = {};  // Carritos por ID
@@ -28,7 +32,7 @@ class Cart with ChangeNotifier {
       final cartId = entry.key;
       final cartItems = entry.value;
       final total = cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
-      return Order(id: cartId, total: total, mesa: getMesa(cartId)); // Incluye la mesa
+      return Order(id: cartId, total: total, mesa: getMesa(cartId), items: cartItems, timestamp: DateTime.now(),); // Incluye la mesa
     }).toList();
   }
 
@@ -79,11 +83,13 @@ class Cart with ChangeNotifier {
   }
 
   // Marca un pedido como completado y lo mueve a la lista de pedidos finalizados
-  void markOrderAsCompleted(String orderId) {
+  void markOrderAsCompleted(String orderId) async {
     //final cart = getCart(orderId);
+    final cartItems = List<CartItem>.from(getCart(orderId)); // Copia de los CartItems
     final total = getTotalAmount(orderId);
-    final order = Order(id: orderId, total: total, mesa: getMesa(orderId)); // Incluye la mesa
+    final order = Order(id: generateShortUuid(), total: total, mesa: 'preparando', items: cartItems, timestamp: DateTime.now(),); // Incluye la mesa
     _completedOrders.add(order);
+    await addLocalOrder(order);
     clear(orderId);
     notifyListeners();
   }
@@ -92,6 +98,16 @@ class Cart with ChangeNotifier {
   double getTotalAmount(String id) {
     return getCart(id).fold(0.0, (total, item) => total + item.totalPrice);
   }
+
+  String generateShortUuid() {
+  var uuid = Uuid().v4(); // Generar un UUID
+  var bytes = utf8.encode(uuid); // Convertir a bytes
+  var shortUuid = base64UrlEncode(bytes).substring(0, 12); // Codificar en Base64 y truncar a 12 caracteres
+
+  // Insertar guiones después de cada 4 caracteres
+  return '${shortUuid.substring(0, 4)}-${shortUuid.substring(4, 8)}-${shortUuid.substring(8, 12)}';
+}
+
 }
 
 // Clase para representar un pedido
@@ -99,10 +115,19 @@ class Order {
   final String id;
   final double total;
   final String? mesa;
+  final List<CartItem> items;
+  final DateTime timestamp;
 
   Order({
     required this.id,
     required this.total,
     this.mesa,
+    required this.items,
+    required this.timestamp,
   });
+
+  @override
+  String toString() {
+    return 'Order(id: $id, mesa: $mesa, total: $total, items: $items, fecha: ${timestamp.toLocal()})';
+  }
 }
