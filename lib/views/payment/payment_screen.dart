@@ -53,7 +53,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
           onPressed: () {
             Navigator.of(context).pop(0.00); // Retorna 0 si se cancela
           },
-          child: const Text('Cancelar'),
+          child: const Text('Cancelar', style: TextStyle(
+            color: Colors.redAccent
+          ),),
         ),
         ElevatedButton(
           onPressed: () {
@@ -65,8 +67,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                      'Por favor ingrese una cantidad válida mayor que 0.'),
-                  backgroundColor: Colors.red,
+                      'Por favor ingrese una cantidad válida mayor que 0.', style: TextStyle(color: Colors.red),),
                 ),
               );
             } else if(widget.totalAmount > enteredAmount){
@@ -74,15 +75,14 @@ class _PaymentDialogState extends State<PaymentDialog> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                      'Por favor ingrese una cantidad igual o mayor al total a cobrar.'),
-                  backgroundColor: Colors.red,
+                      'Por favor ingrese una cantidad igual o mayor al total a cobrar.', style: TextStyle(color: Colors.red),),
                 ),
               );
             }else{
               Navigator.of(context).pop(enteredAmount);
             }
           },
-          child: const Text('Aceptar'),
+          child: const Text('Aceptar', style: TextStyle(color: Colors.black,),),
         ),
       ],
     );

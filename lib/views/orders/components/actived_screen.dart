@@ -30,7 +30,7 @@ class OrderDetailScreen extends StatelessWidget {
               //Navigator.pop(context);
             },
             child: SizedBox(
-                    width: 150,
+                    width: 250,
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -56,7 +56,7 @@ class OrderDetailScreen extends StatelessWidget {
                       Text('CANTIDAD: ${cartItem.cantidad}'),
                       if (cartItem.comentario != '' &&
                           cartItem.comentario.isNotEmpty)
-                        Text('Comentarios: ${cartItem.comentario}'),
+                        Text('Adicionales: ${cartItem.comentario}'),
                     ],
                   ),
                   trailing: SizedBox(
@@ -110,14 +110,40 @@ class OrderDetailScreen extends StatelessWidget {
                 backgroundColor: WidgetStateProperty.all<Color>(Colors.white70),
               ),
               onPressed: () async {
-                // Implementa la funcionalidad para imprimir el ticket aquí
-                if(order.total>1){
-                  bool? connected = await Printer().ensureConnection(context);
-                  if(connected != null && connected){
-                    await Printer().printTicket(items);
-                    Provider.of<Cart>(context, listen: false)
-                      .markOrderAsCompleted(order.id);
+                try{
+                  // Implementa la funcionalidad para imprimir el ticket aquí
+                  if(order.total>1){
+                    bool? connected = await Printer().ensureConnection(context);
+                    if(connected != null && connected){
+                      await Printer().printTicket(items);
+                      Provider.of<Cart>(context, listen: false)
+                        .markOrderAsCompleted(order.id);
+                    }else{
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('La impresora no está conectada.', style: TextStyle(color: Colors.red),),
+                          duration: Duration(seconds: 2), // Duración del mensaje
+                        ),
+                      );
+                    }
                   }
+                } catch (e) {
+                  // Maneja el error, mostrando un mensaje al usuario
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Error de impresión', style: TextStyle(color: Colors.red),),
+                        content: const Text('No se pudo imprimir el ticket. Verifique la conexión de la impresora o si tiene papel.', style: TextStyle(color: Colors.black),),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Aceptar', style: TextStyle(color: Colors.black),),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 }
               },
               child: const Row(

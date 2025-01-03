@@ -65,14 +65,42 @@ class ActiveOrdersTab extends StatelessWidget {
 
   // Implementa la funcionalidad para imprimir el ticket
   void _imprimirTicket(BuildContext context, Order order) async {
-    if(order.total>1){
-      bool? connected = await Printer().ensureConnection(context);
-      if(connected != null && connected){
-        final cart = Provider.of<Cart>(context);
-        final items = cart.getCart(order.id); // Obtiene los ítems del pedido
-        await Printer().printTicket(items);
-        Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+    try{
+      if(order.total>1){
+        bool? connected = await Printer().ensureConnection(context);
+        if(connected != null && connected){
+          final cart = Provider.of<Cart>(context, listen: false);
+          final items = cart.getCart(order.id); // Obtiene los ítems del pedido
+          await Printer().printTicket(items);
+          Provider.of<Cart>(context, listen: false).markOrderAsCompleted(order.id);
+        }else{
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('La impresora no está conectada.', style: TextStyle(color: Colors.red),),
+            duration: Duration(seconds: 2), // Duración del mensaje
+            ),
+          );
+        }
       }
+    }catch (e) {
+      // Maneja el error, mostrando un mensaje al usuario
+      print('Error al imprimir: $e'); // Registra el error en la consola
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error de impresión', style: TextStyle(color: Colors.red),),
+            content: const Text('No se pudo imprimir el ticket. Verifique la conexión de la impresora o si tiene papel.', style: TextStyle(color: Colors.black),),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Aceptar', style: TextStyle(color: Colors.black),),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 }

@@ -189,7 +189,7 @@ class _BuysState extends State<Buys> {
           children: [
             Image.asset(
               'assets/images/${categoria.nombre.toLowerCase().replaceAll(' ', '_')}.png',
-              height: isLandscape && !isSmallScreen ? 200 : isSmallScreen ? 100 : isMediumScreen && isLandscape ? 170 : isMediumScreen && !isLandscape ? 130 : 200,
+              height: isLandscape && !isSmallScreen ? 200 : isSmallScreen ? 100 : isMediumScreen && isLandscape ? 170 : isMediumScreen && !isLandscape ? 100 : 200,
               fit: BoxFit.contain,
             ),
             Padding(

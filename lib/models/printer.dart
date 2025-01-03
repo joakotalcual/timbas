@@ -71,18 +71,12 @@ class Printer {
 
     // Obtener fecha y hora actuales
     final now = DateTime.now();
-    final formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final formatter = DateFormat('dd-MM-yyyy HH:mm');
     final formattedDate = formatter.format(now);
-
-    // Encabezado del ticket
-    // bytes += generator.text(
-    //   '¡Gracias por tu compra!',
-    //   styles: const PosStyles(align: PosAlign.center, bold: true),
-    // );
 
     bytes += generator.feed(2);
     bytes += generator.text('Fecha: $formattedDate', styles: const PosStyles(align: PosAlign.center));
-    bytes += generator.text('-------------------------------');
+    bytes += generator.text('--------------------------------');
 
     // Detalle de los ítems
     for (var item in items) {
@@ -91,29 +85,16 @@ class Printer {
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
 
-      // bytes += generator.text(
-      //   '$categoria DE $nombre',
-      //   styles: const PosStyles(align: PosAlign.left, height: PosTextSize.size2)
-      // );
-      // bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
       bytes += generator.text(
         '$cantidad $categoria de $nombre',
         styles: const PosStyles(align: PosAlign.left, height: PosTextSize.size2)
       );
-      // bytes += generator.text('Cantidad: $cantidad', styles: const PosStyles(height: PosTextSize.size2));
-      if (comentario != '' && comentario.isNotEmpty) {
-        bytes += generator.text('Comentarios: $comentario', styles: const PosStyles(height: PosTextSize.size2));  // Ancho aumentado));
-      }
-      bytes += generator.text('-------------------------------');
-    }
 
-    // Total
-    double total = items.fold(
-        0, (sum, item) => sum + item.producto.precio * item.cantidad);
-    bytes += generator.text(
-      'Total: \$${total.toStringAsFixed(2)}',
-      styles: const PosStyles(align: PosAlign.right, bold: true),
-    );
+      if (comentario != '' && comentario.isNotEmpty) {
+        bytes += generator.text('Adicionales: $comentario', styles: const PosStyles(height: PosTextSize.size2));  // Ancho aumentado));
+      }
+      bytes += generator.text('--------------------------------');
+    }
 
     // Espacios y corte del ticket
     bytes += generator.feed(4);
@@ -128,46 +109,51 @@ class Printer {
 
   Future<void> printTicketClient(List items, String uid, double amount) async {
     final profile = await CapabilityProfile.load();
-    final generator = Generator(PaperSize.mm58, profile);
+    final generator = Generator(PaperSize.mm58, profile, spaceBetweenRows: 1, );
 
     List<int> bytes = [];
 
-    bytes += generator.text('-------------------------------');
+    bytes += generator.text('--------------------------------');
     bytes += generator.text('Timbas y Frappes de la 50', styles: const PosStyles(align: PosAlign.center));
-    bytes += generator.text('-------------------------------');
+    bytes += generator.text('--------------------------------');
     // Obtener fecha y hora actuales
     final now = DateTime.now();
-    final formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final formatter = DateFormat('dd-MM-yyyy HH:mm');
     final formattedDate = formatter.format(now);
 
     // Encabezado del ticket
-    bytes += generator.feed(2);
+    bytes += generator.feed(1);
 
-    bytes += generator.text('Horario: Lunes-Domingo 5pm- 12am');
+    bytes += generator.text('Horario: Lunes-Domingo 5pm-12am');
     bytes += generator.text('Fecha: $formattedDate');
-    bytes += generator.text('Ticket: $uid');
-    bytes += generator.text('-------------------------------');
+    bytes += generator.text('Folio: $uid');
+    bytes += generator.text('--------------------------------');
 
+    bytes += generator.feed(1);
+
+    bytes += generator.text('Can| Cat |  Producto   | Precio');
+    bytes += generator.text('--------------------------------');
     // Detalle de los ítems
     for (var item in items) {
       final nombre = sanitizeText(item.producto.nombre);
       final categoria = sanitizeText(item.categoria);
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
-
+      final precio = item.producto.precio;
+      final rowItem = sanitizedCategory('$cantidad $categoria de $nombre $precio',cantidad, categoria, nombre, precio);
       bytes += generator.text(
-        '$cantidad $categoria de $nombre',
+        rowItem,
         styles: const PosStyles(align: PosAlign.left)
       );
       if (comentario != '' && comentario.isNotEmpty) {
-        bytes += generator.text('Comentarios: $comentario');  // Ancho aumentado));
+        bytes += generator.text('Adicionales: $comentario');  // Ancho aumentado));
       }
     }
 
     // Total
     double total = items.fold(
         0, (sum, item) => sum + item.producto.precio * item.cantidad);
-    bytes += generator.text('-------------------------------');
+    bytes += generator.text('--------------------------------');
     bytes += generator.text(
       'Total: \$${total.toStringAsFixed(2)}',
       styles: const PosStyles(align: PosAlign.right, bold: true),
@@ -176,10 +162,15 @@ class Printer {
       'Pago: \$${amount.toStringAsFixed(2)}',
       styles: const PosStyles(align: PosAlign.right, bold: true),
     );
+    double change = amount - total;
+    bytes += generator.text(
+      'Cambio: \$${change.toStringAsFixed(2)}',
+      styles: const PosStyles(align: PosAlign.right, bold: true),
+    );
 
     bytes += generator.feed(2);
     bytes += generator.text(
-      '¡Gracias por tu compra!',
+      '!Gracias por tu compra!',
       styles: const PosStyles(align: PosAlign.center, bold: true),
     );
     // Espacios y corte del ticket
@@ -195,27 +186,43 @@ class Printer {
 
   //Convertir el string por no aceptar utf-8
   String sanitizeText(String input) {
-  final Map<String, String> replacements = {
-    'ñ': 'n',
-    'Ñ': 'N',
-    'á': 'a',
-    'Á': 'A',
-    'é': 'e',
-    'É': 'E',
-    'í': 'i',
-    'Í': 'I',
-    'ó': 'o',
-    'Ó': 'O',
-    'ú': 'u',
-    'Ú': 'U',
-  };
+    final Map<String, String> replacements = {
+      'ñ': 'n',
+      'Ñ': 'N',
+      'á': 'a',
+      'Á': 'A',
+      'é': 'e',
+      'É': 'E',
+      'í': 'i',
+      'Í': 'I',
+      'ó': 'o',
+      'Ó': 'O',
+      'ú': 'u',
+      'Ú': 'U',
+    };
 
-  String sanitized = input;
-  replacements.forEach((key, value) {
-    sanitized = sanitized.replaceAll(key, value);
-  });
+    String sanitized = input;
+    replacements.forEach((key, value) {
+      sanitized = sanitized.replaceAll(key, value);
+    });
 
-  return sanitized;
-}
+    return sanitized;
+  }
 
+  String sanitizedCategory(String input, cantidad, String categoria, producto, precio){
+      // Diccionario de categorías abreviadas
+      final Map<String, String> categoriasAbreviadas = {
+        "smoothies": "SMTH",
+        "machakados": "MCHD",
+        "frappes de frutas": "FRF",
+        "frappes": "FRP",
+        "diablitos": "DBL",
+      };
+      // Abreviar la categoría si existe en el diccionario
+      String catAbrev = categoriasAbreviadas[categoria.toLowerCase()] ?? categoria;
+      // Crear la línea formateada asegurando los 32 caracteres
+      String formattedLine = "$cantidad x ${catAbrev.padRight(5)} ${producto.padRight(14)} \$${precio.toStringAsFixed(2)}";
+      // Recortar si supera los 32 caracteres
+      return formattedLine.length > 32 ? formattedLine.substring(0, 32) : formattedLine;
+  }
 }

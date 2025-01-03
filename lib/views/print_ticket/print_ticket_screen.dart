@@ -131,7 +131,7 @@ class _PrintTicketScreenState extends State<PrintTicketScreen> {
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: _disconnectPrinter,
-                        child: const Text("Desconectar / Olvidar"),
+                        child: const Text("Desconectar / Olvidar", style: TextStyle(color: Colors.black),),
                       ),
                     ],
                   )
@@ -160,7 +160,7 @@ class _PrintTicketScreenState extends State<PrintTicketScreen> {
                 if (devices.isNotEmpty)
                   ElevatedButton(
                     onPressed: _connectToPrinter,
-                    child: const Text("Conectar"),
+                    child: const Text("Conectar", style: TextStyle(color: Colors.black),),
                   ),
                 const SizedBox(height: 20),
                 Text(statusMessage),

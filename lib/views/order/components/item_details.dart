@@ -108,7 +108,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 child: TextField(
                   controller: commentController,
                   decoration: InputDecoration(
-                    labelText: 'Comentarios',
+                    labelText: 'Adicionales',
                     hintText: 'Ejemplo: sin fresa, sin mango, sin chocolate, etc',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),

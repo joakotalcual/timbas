@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:timbas/models/printer.dart';
+import 'package:timbas/services/database/firebase_services.dart';
 import 'package:timbas/services/database/sqlite.dart';
 import 'package:timbas/views/cart/components/cart_notifier.dart';
-import 'package:timbas/views/orders/components/actived_screen.dart';
 import 'package:timbas/views/payment/payment_screen.dart';
 
 class CompletedOrdersTab extends StatefulWidget {
@@ -21,13 +21,18 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
   Future<void> loadOrders() async {
     final orders = await getLocalOrders();
     final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day, 14); // Hoy a las 2:00 PM
-    final endOfDay = startOfDay.add(const Duration(hours: 22)); // Mañana a las 12:00 PM
+    final startOfDay =
+        DateTime(today.year, today.month, today.day, 14); // Hoy a las 2:00 PM
+    final endOfDay =
+        startOfDay.add(const Duration(hours: 24)); // Mañana a las 2:00 PM
 
     setState(() {
       completedOrders = orders
-          .where((order) => order.timestamp.isAfter(startOfDay) && order.timestamp.isBefore(endOfDay))
-          .toList();
+          .where((order){
+            final orderDate = DateTime.parse(order.timestamp.toString()); // Convertir a DateTime
+          return orderDate.isAfter(startOfDay) &&
+                orderDate.isBefore(endOfDay);
+          }).toList();
       completedOrders.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     });
   }
@@ -46,16 +51,12 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
       builder: (context, snapshot) {
         // Si está cargando los datos
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child:
-                  CircularProgressIndicator()); // Indicador de carga mientras se obtiene la data
+          return const Center(child: CircularProgressIndicator()); // Indicador de carga mientras se obtiene la data
         }
 
         // Si ocurrió un error
         if (snapshot.hasError) {
-          return Center(
-              child: Text(
-                  'Error: ${snapshot.error}')); // Mostrar el error si ocurre
+          return Center(child: Text('Error: ${snapshot.error}')); // Mostrar el error si ocurre
         }
 
         // Si no hay datos o está vacío
@@ -64,7 +65,6 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
         }
 
         final completedOrders = snapshot.data!;
-
         // Obtener el día de inicio (hoy a las 2 PM)
         final today = DateTime.now();
         final startOfDay = DateTime(
@@ -72,17 +72,21 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
 
         // Obtener el día de fin (mañana a las 12 PM)
         final endOfDay =
-            startOfDay.add(const Duration(hours: 22)); // Mañana a las 12:00 PM
+            startOfDay.add(const Duration(hours: 24)); // Mañana a las 2:00 PM
 
         // Filtrar órdenes dentro de ese rango
         final filteredOrders = completedOrders.where((order) {
-          final orderDate =
-              order.timestamp; // Asegúrate de que esto sea un DateTime
+          final orderDate = DateTime.parse(order.timestamp.toString()); // Convertir a DateTime
           return orderDate.isAfter(startOfDay) && orderDate.isBefore(endOfDay);
         }).toList();
 
+
         // Ordenar las órdenes por timestamp en orden descendente
         filteredOrders.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+        if(filteredOrders.isEmpty){
+          return const Center(child: Text('No hay órdenes completadas hoy.'));
+        }
 
         return ListView.builder(
           itemCount: filteredOrders.length,
@@ -95,15 +99,8 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
               child: ExpansionTile(
                 title: Text('ID PEDIDO: ${order.id}'),
                 subtitle: Text('Total: \$${order.total.toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.black,),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => OrderDetailScreen(order: order),
-                    ),
-                  ),
-                ),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
                 children: [
                   // Detalles del pedido
                   Padding(
@@ -112,7 +109,7 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hora: ${DateFormat('dd-MM-yyyy -- HH:mm').format(order.timestamp)}',
+                          'Hora: ${DateFormat('dd-MM-yyyy -- HH:mm').format(DateTime.parse(order.timestamp.toIso8601String()))}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const Text('Productos:'),
@@ -120,12 +117,15 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
                         for (var item in order.items)
                           ListTile(
                             title: Text(
-                                '${item.cantidad} ${item.categoria} ${item.producto.nombre}'),
+                                '${item.cantidad} x ${item.categoria} ${item.producto.nombre}'),
                             subtitle: item.comentario != ''
-                                ? Text('Comentarios: ${item.comentario}')
+                                ? Text('Adicionales: ${item.comentario}')
                                 : null,
-                            trailing:
-                                Text('\$${item.totalPrice.toStringAsFixed(2)}', style: TextStyle(color: Colors.black, fontSize: 16),),
+                            trailing: Text(
+                              '\$${item.totalPrice.toStringAsFixed(2)}',
+                              style:
+                                  const TextStyle(color: Colors.black, fontSize: 16),
+                            ),
                           ),
                         Center(
                           child: SizedBox(
@@ -141,25 +141,31 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
                                 // Implementa la funcionalidad para imprimir el ticket aquí
                                 bool? connected = await Printer().ensureConnection(context);
                                 if(connected != null && connected){
-                                    //actualizar la bd en línea y en local ponerle terminado en mesa
-                                    double? amount = await showPaymentDialog(context, order.total);
-                                    if(amount != 0.0){
+                                double? amount = await showPaymentDialog(
+                                    context, order.total);
+                                  if (amount != 0.0) {
                                     await Printer().printTicketClient(order.items, order.id, amount ?? order.total);
-                                      if(order.mesa == 'preparando'){
-                                          await updateLocalOrder(order.id, 'terminado');
-                                          loadOrders(); // Vuelve a cargar las órdenes actualizadas
-                                      }
-                                    }else{
-                                      print('No realizar nada porque cancelo');
+                                    if (order.mesa == 'preparando') {
+                                      await addOrders(order.id, order);
+                                      await updateLocalOrder(
+                                          order.id, 'terminado');
+                                      loadOrders(); // Vuelve a cargar las órdenes actualizadas
                                     }
+                                  } else {
+                                    print('No realizar nada porque cancelo');
                                   }
+                                }
                               },
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(order.mesa == 'preparando' ? Icons.payments :Icons.print),
+                                  Icon(order.mesa == 'preparando'
+                                      ? Icons.payments
+                                      : Icons.print),
                                   const SizedBox(width: 8),
-                                  Text(order.mesa == 'preparando' ? 'Cobrar al cliente' : 'Reimprimir ticket cliente'),
+                                  Text(order.mesa == 'preparando'
+                                      ? 'Cobrar al cliente'
+                                      : 'Reimprimir ticket cliente'),
                                 ],
                               ),
                             ),

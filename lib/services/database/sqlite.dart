@@ -211,7 +211,6 @@ Future<List<Order>> getLocalOrders() async {
       )
     );
   }
-
   // Devolver la lista de pedidos con sus elementos
   return ordersMap.values.toList();
 }

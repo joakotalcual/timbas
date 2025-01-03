@@ -95,7 +95,7 @@ Future<void> addOrders(String uid, cart.Order order) async {
     'id': order.id,
     'total': order.total,
     'mesa': order.mesa,
-    'timestamp': order.timestamp.toIso8601String(),
+    'timestamp': order.timestamp,
   });
 
   // Guardar los elementos del pedido en la subcolección "items"
@@ -109,4 +109,48 @@ Future<void> addOrders(String uid, cart.Order order) async {
     });
   }
 }
+
+Future<List<Map<String, dynamic>>> fetchSalesData({required String period}) async {
+    final now = DateTime.now();
+    DateTime startOfPeriod;
+    DateTime endOfPeriod = now;
+
+    if (period == 'day') {
+      startOfPeriod = DateTime(now.year, now.month, now.day, 14).subtract(const Duration(days: 1)); // Ayer a las 2PM
+    } else {
+      startOfPeriod = DateTime(now.year, now.month, now.day - 6, 14).subtract(const Duration(days: 1)); // Hace una semana a las 2PM
+    }
+
+    // Consultar a Firebase
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('orders')
+        .where('timestamp', isGreaterThanOrEqualTo: startOfPeriod)
+        .where('timestamp', isLessThanOrEqualTo: endOfPeriod)
+        .orderBy('timestamp', descending: true)
+        .get();
+
+  List<Map<String, dynamic>> results = [];
+
+  // Iterar sobre los documentos principales
+  for (var doc in snapshot.docs) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    data['id'] = doc.id; // Añadir el ID del documento
+
+    // Consultar subcolección 'details' si existe
+    QuerySnapshot subCollectionSnapshot = await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(doc.id)
+        .collection('items')
+        .get();
+
+    data['items'] = subCollectionSnapshot.docs
+        .map((subDoc) => subDoc.data() as Map<String, dynamic>)
+        .toList();
+
+    results.add(data);
+  }
+
+  return results;
+
+  }
 

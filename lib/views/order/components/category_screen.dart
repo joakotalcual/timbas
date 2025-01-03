@@ -62,6 +62,7 @@ class CategoryDetailScreen extends StatelessWidget {
     var responsive = Responsive(context);
     bool isLandscape = responsive.isLandscape;
     bool isSmallScreen = responsive.isSmallScreen;
+    bool isMediumScreen = responsive.isMediumScreen;
     double fontTitle = responsive.fontSizeTitle;
 
     return InkWell(
@@ -82,7 +83,7 @@ class CategoryDetailScreen extends StatelessWidget {
               Image.asset(
                 producto.imagen,
                 fit: BoxFit.contain,
-                height: isLandscape && !isSmallScreen ? 120 : 80,
+                height: isLandscape && !isSmallScreen ? 120 : !isLandscape && isMediumScreen ? 130 :  75 ,
               ),
             Padding(
               padding: const EdgeInsets.all(8.0),
