@@ -98,7 +98,8 @@ class ProductsScreen extends StatelessWidget {
                               name: products[index]['nombre'],
                               price: products[index]['precio'],
                               uid: products[index]['uid'],
-                              categoryNames : categoryNames
+                              categoryNames : categoryNames,
+                              extra: products[index]['extra'],
                             ),
                           ),
                         );

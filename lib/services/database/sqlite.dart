@@ -8,6 +8,7 @@ import 'package:timbas/views/cart/components/cart_notifier.dart';
 Future<Database> getLocalDatabase() async {
   return openDatabase(
     join(await getDatabasesPath(), 'app_database.db'),
+    version: 1,
     onCreate: (db, version) async {
       // Crear las tablas si no existen
       await db.execute(
@@ -26,7 +27,8 @@ Future<Database> getLocalDatabase() async {
           imagen TEXT,
           categorias TEXT,
           precio REAL,
-          activo INTEGER
+          activo INTEGER,
+          extra REAL
         );
         '''
       );
@@ -55,7 +57,14 @@ Future<Database> getLocalDatabase() async {
         '''
       );
     },
-    version: 1,
+    // onUpgrade: (db, oldVersion, newVersion) async {
+    //   if (oldVersion < 2) {
+    //     // Agregar la nueva columna 'extra' a la tabla 'productos'
+    //     await db.execute(
+    //       "ALTER TABLE productos ADD COLUMN extra REAL DEFAULT 0;"
+    //     );
+    //   }
+    // },
   );
 }
 
@@ -103,7 +112,7 @@ Future<void> deleteLocalCategory(String uid) async {
 }
 
 // Función para agregar una categoría local
-Future<void> addLocalProduct(String uid, String name, String image, String category, double price, int active) async {
+Future<void> addLocalProduct(String uid, String name, String image, String category, double price, int active, double extra) async {
   final db = await getLocalDatabase();
   await db.insert(
     'productos',
@@ -113,14 +122,15 @@ Future<void> addLocalProduct(String uid, String name, String image, String categ
       'imagen' : image,
       'categorias' : category,
       'precio' : price,
-      'activo' : active
+      'activo' : active,
+      'extra' : extra,
     }, // Incluye el UID en la base de datos local
     conflictAlgorithm: ConflictAlgorithm.replace,
   );
 }
 
 // Función para actualizar una categoría local
-Future<void> updateLocalProduct(String uid, String name, String image, String category, double price, int active) async {
+Future<void> updateLocalProduct(String uid, String name, String image, String category, double price, int active, double extra) async {
   final db = await getLocalDatabase();
   await db.update(
     'productos',
@@ -129,7 +139,8 @@ Future<void> updateLocalProduct(String uid, String name, String image, String ca
       'imagen' : image,
       'categorias' : category,
       'precio' : price,
-      'activo' : active
+      'activo' : active,
+      'extra' : extra,
     },
     where: 'uid = ?',
     whereArgs: [uid],
@@ -204,7 +215,7 @@ Future<List<Order>> getLocalOrders() async {
     // Agregar el item a la lista de items del pedido
     ordersMap[orderId]?.items.add(
       CartItem(
-        producto: Producto(id: '', nombre: orderData['product_name'].toString(), imagen: '', idCategorias: '', precio: double.parse( orderData['total_price'].toString()), activo: true),
+        producto: Producto(id: '', nombre: orderData['product_name'].toString(), imagen: '', idCategorias: '', precio: double.parse( orderData['total_price'].toString()), activo: true, extra: 0),
         categoria: orderData['category'].toString(),
         comentario: orderData['comments'].toString(),
         cantidad: int.parse(orderData['quantity'].toString()),

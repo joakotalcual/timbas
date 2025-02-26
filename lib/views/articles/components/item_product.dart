@@ -8,6 +8,7 @@ class ItemProduct extends StatefulWidget {
   final bool isEdit;
   final String? name, image, uid, category;
   final double? price;
+  final double? extra;
   final bool? active;
   final Map<String, String>? categoryNames;
 
@@ -21,6 +22,7 @@ class ItemProduct extends StatefulWidget {
     this.active,
     this.uid,
     this.categoryNames,
+    this.extra
   });
 
   @override
@@ -32,6 +34,7 @@ class _ItemProductState extends State<ItemProduct> {
   bool _isAvailable = true;
   String? _selectedCategory;
   late TextEditingController _priceController;
+  late TextEditingController _extraController;
   late TextEditingController _nameController;
   String? _assetImage; // Variable para manejar la imagen de assets
   String? _imagePath;
@@ -40,6 +43,9 @@ class _ItemProductState extends State<ItemProduct> {
   void initState() {
     _priceController = TextEditingController(
       text: widget.isEdit ? widget.price?.toString() : null,
+    );
+    _extraController = TextEditingController(
+      text: widget.isEdit ? widget.extra?.toString() : null,
     );
     _nameController = TextEditingController(
       text: widget.isEdit ? widget.name : null,
@@ -98,10 +104,10 @@ class _ItemProductState extends State<ItemProduct> {
               String name = _nameController.text;
               //  lógica de guardado aquí
               if (widget.isEdit) {
-                await updateProductController(context, widget.uid!, name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 0);
+                await updateProductController(context, widget.uid!, name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 0, _extraController.text);
               } else {
                 //  lógica de inserción aquí
-                await updateProductController(context, '', name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 1);
+                await updateProductController(context, '', name, _assetImage ?? _imagePath ?? 'n.xrltalcual', _selectedCategory ?? 'n.xrltalcual', _priceController.text, _isAvailable, 1, _extraController.text);
               }
             },
             child: const Text(
@@ -154,6 +160,17 @@ class _ItemProductState extends State<ItemProduct> {
               ],
               decoration: const InputDecoration(
                 labelText: 'Precio',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _extraController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                _PriceInputFormatter(),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Extra',
               ),
             ),
             const SizedBox(height: 16),
@@ -211,7 +228,7 @@ class _ItemProductState extends State<ItemProduct> {
                 ? TextButton(
                     onPressed: () async {
                       // funcionalidad de eliminación aquí
-                      await updateProductController(context, widget.uid!, '', '', _selectedCategory!, _priceController.text, _isAvailable, 2);
+                      await updateProductController(context, widget.uid!, '', '', _selectedCategory!, _priceController.text, _isAvailable, 2, '');
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,

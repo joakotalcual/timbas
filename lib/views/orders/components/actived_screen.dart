@@ -48,7 +48,7 @@ class OrderDetailScreen extends StatelessWidget {
                 final cartItem = items[index];
                 return ListTile(
                   title: Text(
-                    '${cartItem.categoria} DE ${cartItem.producto.nombre}',
+                    '${cartItem.categoria} DE ${cartItem.producto.nombre} \$${cartItem.producto.precio}',
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +56,17 @@ class OrderDetailScreen extends StatelessWidget {
                       Text('CANTIDAD: ${cartItem.cantidad}'),
                       if (cartItem.comentario != '' &&
                           cartItem.comentario.isNotEmpty)
-                        Text('Adicionales: ${cartItem.comentario}'),
+                        Text('Comentarios: ${cartItem.comentario}'),
+                      if (cartItem.extras.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: cartItem.extras.map((extra) {
+                            return Text(
+                              'Extra: ${extra.nombre} - \$${extra.precio.toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 12),
+                            );
+                          }).toList(),
+                        ),
                     ],
                   ),
                   trailing: SizedBox(
@@ -73,7 +83,7 @@ class OrderDetailScreen extends StatelessWidget {
                             } else {
                               Provider.of<Cart>(context, listen: false)
                                   .removeItem(order.id, cartItem.producto,
-                                      cartItem.categoria, cartItem.comentario);
+                                      cartItem.categoria, cartItem.comentario, cartItem.extras);
                             }
                           },
                         ),
@@ -85,7 +95,8 @@ class OrderDetailScreen extends StatelessWidget {
                                 order.id,
                                 cartItem.producto,
                                 cartItem.categoria,
-                                cartItem.comentario);
+                                cartItem.comentario,
+                                cartItem.extras);
                           },
                         ),
                       ],
@@ -191,6 +202,7 @@ class OrderDetailScreen extends StatelessWidget {
                   cartItem.producto,
                   cartItem.categoria,
                   cartItem.comentario,
+                  cartItem.extras
                 );
                 option = true;
                 if(cart.getTotalAmount(cartId) < 1){

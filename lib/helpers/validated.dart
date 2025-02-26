@@ -2,7 +2,7 @@
 // Validador para el nombre del producto
 bool isValidName(String name) {
   // Expresión regular para validar los nombres
-  String p = r'^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$';
+  String p = r'^[A-Za-zÀ-ÖØ-öø-ÿ\s&]+$';
   RegExp regExp = RegExp(p);
   return regExp.hasMatch(name);
 }

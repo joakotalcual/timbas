@@ -53,7 +53,8 @@ Future<List> getProducts() async{
       'precio' : data['precio'],
       'imagen' : data['imagen'],
       'categorias' : data['categorias'],
-      'activo' : data['activo']
+      'activo' : data['activo'],
+      'extra' : data['extra'],
     };
     products.add(product);
   }
@@ -73,13 +74,14 @@ Future<String> addProducts(String name, String image, String categories, double 
   return docRef.id; // Devuelve el UID
 }
 
-Future<void> updateProducts(String uid, String name, String image, String categories, double price, bool active) async{
+Future<void> updateProducts(String uid, String name, String image, String categories, double price, bool active, double extra) async{
   await db.collection('productos').doc(uid).set({
     'nombre' : name,
     'imagen' : image,
     'categorias' : categories,
     'precio' : price,
-    'activo' : active
+    'activo' : active,
+    'extra' : extra,
   });
 }
 

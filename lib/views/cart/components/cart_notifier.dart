@@ -42,27 +42,39 @@ class Cart with ChangeNotifier {
   }
 
   // Añade un ítem al carrito
-  void addItem(String id, Producto producto, String nombreCategoria, String comentario) {
+  void addItem(String id, Producto producto, String nombreCategoria, String comentario, List<Extra> extras) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id && item.comentario == comentario,
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario),
+      (item) => item.producto.id == producto.id && item.comentario == comentario && _areExtrasEqual(item.extras, extras),
+      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras),
     );
 
     if (cart.contains(existingItem)) {
       existingItem.incrementarCantidad();
     } else {
-      cart.add(CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario));
+      cart.add(CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras));
     }
     notifyListeners();
   }
 
+  // Función que compara dos listas de extras
+  bool _areExtrasEqual(List<Extra> extras1, List<Extra> extras2) {
+    if (extras1.length != extras2.length) return false;
+
+    for (int i = 0; i < extras1.length; i++) {
+      if (extras1[i] != extras2[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Elimina un ítem del carrito
-  void removeItem(String id, Producto producto, String nombreCategoria, String comentario) {
+  void removeItem(String id, Producto producto, String nombreCategoria, String comentario, extras) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id && item.comentario == comentario,
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario),
+      (item) => item.producto.id == producto.id && item.comentario == comentario && _areExtrasEqual(item.extras, extras),
+      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras),
     );
 
     if (cart.contains(existingItem)) {
@@ -96,7 +108,10 @@ class Cart with ChangeNotifier {
 
   // Calcula el monto total del carrito para un ID específico
   double getTotalAmount(String id) {
-    return getCart(id).fold(0.0, (total, item) => total + item.totalPrice);
+    return getCart(id).fold(0.0, (total, item) {
+      double extrasTotal = item.extras.fold(0.0, (sum, extra) => sum + extra.precio);
+      return total + item.producto.precio * item.cantidad + (extrasTotal * item.cantidad);
+    });
   }
 
   String generateShortUuid() {

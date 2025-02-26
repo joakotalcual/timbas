@@ -5,6 +5,7 @@ class Producto {
   final String idCategorias;
   final double precio;
   final bool activo;
+  final double extra;
 
   Producto({
     required this.id,
@@ -12,7 +13,8 @@ class Producto {
     required this.imagen,
     required this.idCategorias,
     required this.precio,
-    required this.activo
+    required this.activo,
+    required this.extra
 });
 
   factory Producto.fromMap(Map<String, dynamic> map) {
@@ -23,6 +25,7 @@ class Producto {
       idCategorias: map['categorias'],
       precio: map['precio'],
       activo: map['activo'] == 1,
+      extra: map['extra'] != null ? (map['extra'] as num).toDouble() : 0.0,
     );
   }
 }

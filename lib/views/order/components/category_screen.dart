@@ -23,7 +23,6 @@ class CategoryDetailScreen extends StatelessWidget {
     var responsive = Responsive(context);
     bool isLandscape = responsive.isLandscape;
     bool isSmallScreen = responsive.isSmallScreen;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(categoria.nombre),
@@ -48,7 +47,10 @@ class CategoryDetailScreen extends StatelessWidget {
               itemCount: activeProducts.length,
               itemBuilder: (context, index) {
                 final product = activeProducts[index];
-                return _buildGridItem(context, product, categoria.nombre, cartId);
+                // Si la categoría es "Frappes", pasamos la lista de productos activos
+                final List<Producto>? productosFrappes = categoria.nombre.toLowerCase() == "frappes"
+                    ? activeProducts : null;
+                return _buildGridItem(context, product, categoria.nombre, cartId, productosFrappes);
               },
             ),
           );
@@ -58,13 +60,12 @@ class CategoryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildGridItem(BuildContext context, Producto producto,
-      String categoriaNombre, String carID) {
+      String categoriaNombre, String carID, List<Producto>? productosFrappes) {
     var responsive = Responsive(context);
     bool isLandscape = responsive.isLandscape;
     bool isSmallScreen = responsive.isSmallScreen;
     bool isMediumScreen = responsive.isMediumScreen;
     double fontTitle = responsive.fontSizeTitle;
-
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -73,6 +74,7 @@ class CategoryDetailScreen extends StatelessWidget {
               producto: producto,
               categoria: categoriaNombre,
               cartId: carID,
+              productosRelacionados: productosFrappes,
             ),
           ),
         );
@@ -86,12 +88,14 @@ class CategoryDetailScreen extends StatelessWidget {
                 height: isLandscape && !isSmallScreen ? 120 : !isLandscape && isMediumScreen ? 130 :  75 ,
               ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(6.0),
               child: Text(
                 producto.nombre,
                 maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: fontTitle,
+                  fontSize: isLandscape && !isSmallScreen ? fontTitle - 1.2 : fontTitle ,
                   fontWeight: FontWeight.bold,
                 ),
               ),

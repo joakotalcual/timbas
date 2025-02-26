@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timbas/models/cart.dart';
 import 'package:timbas/models/products.dart';
 import 'package:timbas/views/cart/components/cart_notifier.dart';
 
@@ -9,6 +10,7 @@ class ItemDetailScreen extends StatefulWidget {
   final String? tipoPedido;
   final String? mesa;
   final String cartId; // Añade el cartId
+  final List<Producto>? productosRelacionados;
 
   const ItemDetailScreen({
     super.key,
@@ -17,6 +19,7 @@ class ItemDetailScreen extends StatefulWidget {
     this.tipoPedido,
     this.mesa,
     required this.cartId, // Pasa el cartId
+    this.productosRelacionados,
   });
 
   @override
@@ -25,11 +28,30 @@ class ItemDetailScreen extends StatefulWidget {
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
   int _cantidad = 1;
+  double precioTotal = 0.0;
   TextEditingController commentController = TextEditingController();
+  List<String> selectedExtras = [];
+  List<String> frappesExtras = [];
 
   void _incrementarCantidad() {
     setState(() {
       _cantidad++;
+      actualizarPrecio(); // Asegurar que se actualice el total
+    });
+  }
+
+  void actualizarPrecio() {
+    setState(() {
+      double totalExtras = selectedExtras.fold(0.0, (sum, extraFull) {
+        String extraNombre = extraFull.split(" - ")[0]; // Extrae solo el nombre
+        var extra = widget.productosRelacionados?.firstWhere(
+          (e) => e.nombre == extraNombre,
+          orElse: () => Producto(id: '', nombre: '', precio: 0.0, extra: 0.0, imagen: '', idCategorias: '', activo: true),
+        );
+        return sum + (extra?.extra ?? 0.0);
+      });
+
+      precioTotal = (widget.producto.precio + totalExtras) * _cantidad; // Multiplica por la cantidad
     });
   }
 
@@ -37,23 +59,80 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (_cantidad > 1) {
       setState(() {
         _cantidad--;
+        actualizarPrecio(); // Asegurar que se actualice el total
       });
     }
+  }
+
+  void _toggleExtra(String extra) {
+    setState(() {
+      if (selectedExtras.contains(extra)) {
+        selectedExtras.remove(extra);
+      } else {
+        if (selectedExtras.length < 10) {
+          selectedExtras.add(extra);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("No puedes agregar más de 10 adicionales."),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+      actualizarPrecio();
+    });
   }
 
   void _agregarAlCarrito() {
     String comment = commentController.text;
     final cart = Provider.of<Cart>(context, listen: false);
+
+    // Crear la lista de extras con el nombre y el precio
+  List<Extra> extrasSeleccionados = selectedExtras.map((extraFull) {
+    String extraNombre = extraFull.split(" - ")[0]; // Extrae solo el nombre
+    var productoExtra = widget.productosRelacionados?.firstWhere(
+      (e) => e.nombre == extraNombre,
+      orElse: () => Producto(id: '', nombre: '', precio: 0.0, extra: 0.0, imagen: '', idCategorias: '', activo: true),
+    );
+    return Extra(
+      nombre: extraNombre,
+      precio: productoExtra?.extra ?? 0.0,
+    );
+  }).toList();
+
+
     for (int i = 0; i < _cantidad; i++) {
       cart.addItem(
-          widget.cartId, widget.producto, widget.categoria, comment); // Usa el cartId
-    }
+        widget.cartId, widget.producto, widget.categoria, comment, extrasSeleccionados); // Usa el cartId
+      }
     Navigator.pop(context); // Cierra la pantalla de detalles del producto
     Navigator.pop(context); // Cierra la pantalla de detalles del producto
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.productosRelacionados != null) {
+      // Filtra el producto actual
+      List<Producto> productosFiltrados = widget.productosRelacionados!
+          .where((producto) => producto.id != widget.producto.id && !['supremo base café', 'supremo base fresa'].contains(producto.nombre.toLowerCase()))
+          .toList();
+
+      // Ordena por nombre
+      productosFiltrados.sort((a, b) => a.nombre.compareTo(b.nombre));
+
+      // Mapea la lista a String después de ordenar
+      frappesExtras = productosFiltrados
+          .map((producto) => "${producto.nombre} - \$${producto.extra}")
+          .toList();
+    }
+    precioTotal = widget.producto.precio;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    bool isFrappes = widget.categoria.toLowerCase() == "frappes";
   return Scaffold(
     appBar: AppBar(
       title: Text(widget.categoria),
@@ -103,12 +182,41 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ),
                 ],
               ),
-              SizedBox(
+              // Sección de adicionales SOLO si la categoría es Frappes
+                if (isFrappes)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Selecciona adicionales:",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Wrap(
+                        spacing: 8.0,
+                        children: frappesExtras.map((extra) {
+                          bool isSelected = selectedExtras.contains(extra);
+                          return ChoiceChip(
+                            label: Text(extra),
+                            selected: isSelected,
+                            onSelected: (_) => _toggleExtra(extra),
+                            selectedColor: Colors.brown[300],
+                            backgroundColor: Colors.grey[200],
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+              const SizedBox(height: 8.0),
+                SizedBox(
                 width: 550,
                 child: TextField(
                   controller: commentController,
                   decoration: InputDecoration(
-                    labelText: 'Adicionales',
+                    labelText: 'Comentarios',
                     hintText: 'Ejemplo: sin fresa, sin mango, sin chocolate, etc',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -133,9 +241,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ElevatedButton.icon(
                 onPressed: _agregarAlCarrito,
                 icon: const Icon(Icons.shopping_cart),
-                label: const Text(
-                  'Agregar al carrito',
-                  style: TextStyle(color: Color(0xFF424242)),
+                label: Text(
+                  'Agregar al carrito \$${precioTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Color(0xFF424242)),
                 ),
                 style: ElevatedButton.styleFrom(
                   iconColor: const Color(0xFF424242),
