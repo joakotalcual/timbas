@@ -56,6 +56,18 @@ Future<Database> getLocalDatabase() async {
         );
         '''
       );
+      await db.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS order_extras (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_id TEXT,
+          product_name TEXT,
+          extra_name TEXT,
+          extra_price REAL,
+          FOREIGN KEY(order_id) REFERENCES orders(id)
+        );
+        '''
+      );
     },
     // onUpgrade: (db, oldVersion, newVersion) async {
     //   if (oldVersion < 2) {
@@ -182,6 +194,18 @@ Future<void> addLocalOrder(Order order) async {
     },
       conflictAlgorithm: ConflictAlgorithm.replace, // Si ya existe el ID, reemplázalo
     );
+
+    // Insertar los extras asociados al cartItem
+    for (var extra in item.extras) {
+      await db.insert('order_extras', {
+        'order_id': order.id,
+        'product_name': item.producto.nombre, // Puede ser útil para referenciar
+        'extra_name': extra.nombre,
+        'extra_price': extra.precio,
+      },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
   }
 }
 
@@ -212,13 +236,27 @@ Future<List<Order>> getLocalOrders() async {
       );
     }
 
-    // Agregar el item a la lista de items del pedido
+    // Consultar los extras de este pedido específico
+    final extrasData = await db.rawQuery('''
+      SELECT extra_name, extra_price
+      FROM order_extras
+      WHERE order_id = ? AND product_name = ?
+    ''', [orderId, orderData['product_name']]);
+
+    // Crear la lista de extras
+    List<Extra> extras = extrasData.map((extraData) => Extra(
+      nombre: extraData['extra_name'].toString(),
+      precio: double.parse(extraData['extra_price'].toString()),
+    )).toList();
+
+    // Agregar el item y sus extras a la lista de items del pedido
     ordersMap[orderId]?.items.add(
       CartItem(
         producto: Producto(id: '', nombre: orderData['product_name'].toString(), imagen: '', idCategorias: '', precio: double.parse( orderData['total_price'].toString()), activo: true, extra: 0),
         categoria: orderData['category'].toString(),
         comentario: orderData['comments'].toString(),
         cantidad: int.parse(orderData['quantity'].toString()),
+        extras: extras,
       )
     );
   }

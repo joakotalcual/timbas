@@ -75,7 +75,8 @@ class Printer {
     final formattedDate = formatter.format(now);
 
     bytes += generator.feed(2);
-    bytes += generator.text('Fecha: $formattedDate', styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text('Fecha: $formattedDate',
+        styles: const PosStyles(align: PosAlign.center));
     bytes += generator.text('--------------------------------');
 
     // Detalle de los ítems
@@ -85,13 +86,22 @@ class Printer {
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
 
-      bytes += generator.text(
-        '$cantidad $categoria de $nombre',
-        styles: const PosStyles(align: PosAlign.left, height: PosTextSize.size2)
-      );
+      bytes += generator.text('$cantidad $categoria de $nombre',
+          styles:
+              const PosStyles(align: PosAlign.left, height: PosTextSize.size2));
+
+      if (item.extras.isNotEmpty) {
+        bytes += generator.text('Extras:');
+        for (var extra in item.extras) {
+          //print("- ${extra.nombre}: \$${extra.precio.toStringAsFixed(2)}");//QUITAR EL PRECIO SOLO ES COMANDA
+          bytes += generator.text(' - ${sanitizeText(extra.nombre)}');
+        }
+      }
 
       if (comentario != '' && comentario.isNotEmpty) {
-        bytes += generator.text('Adicionales: $comentario', styles: const PosStyles(height: PosTextSize.size2));  // Ancho aumentado));
+        bytes += generator.text('Comentarios: ${sanitizeText(comentario)}',
+            styles: const PosStyles(
+                height: PosTextSize.size2)); // Ancho aumentado));
       }
       bytes += generator.text('--------------------------------');
     }
@@ -109,12 +119,17 @@ class Printer {
 
   Future<void> printTicketClient(List items, String uid, double amount) async {
     final profile = await CapabilityProfile.load();
-    final generator = Generator(PaperSize.mm58, profile, spaceBetweenRows: 1, );
+    final generator = Generator(
+      PaperSize.mm58,
+      profile,
+      spaceBetweenRows: 1,
+    );
 
     List<int> bytes = [];
 
     bytes += generator.text('--------------------------------');
-    bytes += generator.text('Timbas y Frappes de la 50', styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text('Timbas y Frappes de la 50',
+        styles: const PosStyles(align: PosAlign.center));
     bytes += generator.text('--------------------------------');
     // Obtener fecha y hora actuales
     final now = DateTime.now();
@@ -140,19 +155,88 @@ class Printer {
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
       final precio = item.producto.precio;
-      final rowItem = sanitizedCategory('$cantidad $categoria de $nombre $precio',cantidad, categoria, nombre, precio);
-      bytes += generator.text(
-        rowItem,
-        styles: const PosStyles(align: PosAlign.left)
-      );
+      final rowItem = sanitizedCategory(
+          cantidad,
+          categoria,
+          nombre,
+          precio);
+      bytes += generator.text(rowItem,
+          styles: const PosStyles(align: PosAlign.left));
+      if (item.extras.isNotEmpty) {
+        bytes += generator.text('Extras:');
+        for (var extra in item.extras) {
+          String nombreLimpio = sanitizeText(extra.nombre);
+          int longitud = nombreLimpio.length;
+          String linea = "- $nombreLimpio";
+
+          switch (longitud) {
+            case >= 13: // Si es demasiado largo, lo cortamos
+              linea =
+                  "- $nombreLimpio          \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 12: // Se ajusta con un punto si es necesario
+              linea =
+                  "- $nombreLimpio           \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 10: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio             \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 9: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio              \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 8: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio               \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 7: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio                \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 6: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio                 \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 5: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio................. \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 4: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio.................. \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            case >= 3: // Mantiene la palabra lo más intacta posible
+              linea =
+                  "- $nombreLimpio................... \$${extra.precio.toStringAsFixed(2)}";
+              break;
+            default: // Si cabe bien, lo deja sin modificar
+              linea = "- $nombreLimpio";
+          }
+
+          bytes += generator.text(linea);
+        }
+      }
       if (comentario != '' && comentario.isNotEmpty) {
-        bytes += generator.text('Adicionales: $comentario');  // Ancho aumentado));
+        bytes += generator.text(
+            'Comentarios: ${sanitizeText(comentario)}'); // Ancho aumentado));
       }
     }
 
     // Total
     double total = items.fold(
-        0, (sum, item) => sum + item.producto.precio * item.cantidad);
+      0.0, (sum, item) {
+        // Sumar el precio del producto por la cantidad
+        double itemTotal = item.producto.precio * item.cantidad;
+
+        // Sumar los extras para este item
+        double extrasTotal = item.extras
+            .fold(0.0, (extrasSum, extra) => extrasSum + extra.precio);
+
+        // Añadir el precio de los extras al total del item
+        return sum + itemTotal + extrasTotal;
+      }
+    );
     bytes += generator.text('--------------------------------');
     bytes += generator.text(
       'Total: \$${total.toStringAsFixed(2)}',
@@ -209,20 +293,26 @@ class Printer {
     return sanitized;
   }
 
-  String sanitizedCategory(String input, cantidad, String categoria, producto, precio){
-      // Diccionario de categorías abreviadas
-      final Map<String, String> categoriasAbreviadas = {
-        "smoothies": "SMTH",
-        "machakados": "MCHD",
-        "frappes de frutas": "FRF",
-        "frappes": "FRP",
-        "diablitos": "DBL",
-      };
-      // Abreviar la categoría si existe en el diccionario
-      String catAbrev = categoriasAbreviadas[categoria.toLowerCase()] ?? categoria;
-      // Crear la línea formateada asegurando los 32 caracteres
-      String formattedLine = "$cantidad x ${catAbrev.padRight(5)} ${producto.padRight(14)} \$${precio.toStringAsFixed(2)}";
-      // Recortar si supera los 32 caracteres
-      return formattedLine.length > 32 ? formattedLine.substring(0, 32) : formattedLine;
+  String sanitizedCategory(cantidad, String categoria, producto, precio) {
+    // Diccionario de categorías abreviadas
+    final Map<String, String> categoriasAbreviadas = {
+      "smoothies": "SMTH",
+      "machakados": "MCHD",
+      "frappes de frutas": "FRF",
+      "frappes": "FRP",
+      "diablitos": "DBL",
+    };
+    // Abreviar la categoría si existe en el diccionario
+    String catAbrev =
+        categoriasAbreviadas[categoria.toLowerCase()] ?? categoria;
+    // Eliminar la palabra "BASE" de producto y limpiar espacios extra
+    String productoLimpio = producto.replaceAll("BASE", "").replaceAll(RegExp(r"\s+"), " ").trim();
+    // Crear la línea formateada asegurando los 32 caracteres
+    String formattedLine =
+        "$cantidad x ${catAbrev.padRight(5)} ${productoLimpio.padRight(14)} \$${precio.toStringAsFixed(2)}";
+    // Recortar si supera los 32 caracteres
+    return formattedLine.length > 32
+        ? formattedLine.substring(0, 32)
+        : formattedLine;
   }
 }

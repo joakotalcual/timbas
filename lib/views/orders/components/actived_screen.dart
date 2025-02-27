@@ -129,6 +129,7 @@ class OrderDetailScreen extends StatelessWidget {
                       await Printer().printTicket(items);
                       Provider.of<Cart>(context, listen: false)
                         .markOrderAsCompleted(order.id);
+                        Navigator.pop(context);
                     }else{
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

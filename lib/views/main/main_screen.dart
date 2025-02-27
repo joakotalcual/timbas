@@ -16,9 +16,9 @@ class _MainScreenState extends State<MainScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
-  void initState() {
+  void initState() async {
     super.initState();
-    //await Printer().reconnectPrinter(context); // Reconectar impresora al cargar la pantalla principal
+    await Printer().reconnectPrinter(context); // Reconectar impresora al cargar la pantalla principal
   }
 
   // Mantenemos el índice actual del contenido seleccionado

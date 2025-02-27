@@ -42,7 +42,7 @@ class CartScreen extends StatelessWidget {
                             } else {
                               Provider.of<Cart>(context, listen: false)
                                   .removeItem(cartId, cartItem.producto,
-                                      cartItem.categoria, '');
+                                      cartItem.categoria, '', cartItem.extras);
                             }
                           },
                         ),
@@ -51,7 +51,7 @@ class CartScreen extends StatelessWidget {
                           icon: const Icon(Icons.add),
                           onPressed: () {
                             Provider.of<Cart>(context, listen: false).addItem(
-                                cartId, cartItem.producto, cartItem.categoria, '');
+                                cartId, cartItem.producto, cartItem.categoria, '',cartItem.extras);
                           },
                         ),
                       ],
@@ -97,7 +97,7 @@ class CartScreen extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pop(); // Cierra el diálogo
               Provider.of<Cart>(context, listen: false)
-                  .removeItem(cartId, cartItem.producto, cartItem.categoria, '');
+                  .removeItem(cartId, cartItem.producto, cartItem.categoria, '', cartItem.extras);
             },
             child: const Text('Sí'),
           ),

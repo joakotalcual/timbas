@@ -48,7 +48,7 @@ class ActiveOrdersTab extends StatelessWidget {
         final order = activeOrders[index];
         return ListTile(
           title: Text('Mesa: ${order.mesa ?? 'Para Llevar'}'),
-          subtitle: Text('Total: \$${order.total.toStringAsFixed(2)}'),
+          subtitle: Text('Total: \$${cart.getTotalAmount(order.id).toStringAsFixed(2)}'),
           trailing: order.total > 1 ? IconButton(
             icon: const Icon(Icons.print),
             onPressed: () => order.total > 1 ? _imprimirTicket(context, order) : null,

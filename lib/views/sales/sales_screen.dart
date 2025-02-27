@@ -24,30 +24,29 @@ class _SalesState extends State<Sales> {
     return sales.fold(0.0, (total, sale) => total + (sale['total'] ?? 0.0));
   }
 
-  String getPeriod(DateTime currentTime) {
-    final hour = currentTime.hour;
-    final now = DateFormat('dd-MM-yyyy').format(currentTime);
+//   String getPeriod(DateTime currentTime) {
+//   final hour = currentTime.hour;
+//   final now = DateFormat('dd-MM-yyyy').format(currentTime);
 
-    // Definir el periodo de tiempo según la hora
-    if (hour >= 2 && hour < 12) {
-      // De 12 AM a 1:59 PM
-      final yesterday = currentTime.subtract(const Duration(days: 1));
-      final formattedYesterday = DateFormat('dd-MM-yyyy').format(yesterday);
-      return '2PM ($formattedYesterday) - 2PM ($now)';
-    } else {
-      // De 2 PM a 11:59 PM
-      final tomorrow = currentTime.add(const Duration(days: 1));
-      final formattedTomorrow = DateFormat('dd-MM-yyyy').format(tomorrow);
-      return '2PM ($now) - 2PM ($formattedTomorrow)';
-    }
-  }
+//   if (hour < 14) {
+//     // De 2 PM del día anterior hasta 1:59 PM del día actual
+//     final yesterday = currentTime.subtract(const Duration(days: 1));
+//     final formattedYesterday = DateFormat('dd-MM-yyyy').format(yesterday);
+//     return '2PM ($formattedYesterday) - 2PM ($now)';
+//   } else {
+//     // De 2 PM del día actual hasta 1:59 PM del día siguiente
+//     final tomorrow = currentTime.add(const Duration(days: 1));
+//     final formattedTomorrow = DateFormat('dd-MM-yyyy').format(tomorrow);
+//     return '2PM ($now) - 2PM ($formattedTomorrow)';
+//   }
+// }
 
   @override
   Widget build(BuildContext context) {
     DateTime time = DateTime.now();
     final today = DateFormat('dd-MM-yyyy').format(time);
-    final periodText = getPeriod(time); // Obtener el periodo dinámico
-
+    String periodText =
+        'Período: Últimas 24 horas (1:59PM)'; //getPeriod(time); // Obtener el periodo dinámico
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ventas'),
@@ -65,7 +64,7 @@ class _SalesState extends State<Sales> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Período: $periodText',
+                periodText,
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 16),
@@ -76,6 +75,7 @@ class _SalesState extends State<Sales> {
                     onPressed: () {
                       setState(() {
                         period = 'day';
+                        periodText = 'Período: Últimas 24 horas (1:59PM)';
                         salesData = fetchSalesData(period: period);
                       });
                     },
@@ -88,6 +88,7 @@ class _SalesState extends State<Sales> {
                     onPressed: () {
                       setState(() {
                         period = 'week';
+                        periodText = 'Período: Últimos 7 días';
                         salesData = fetchSalesData(period: period);
                       });
                     },
@@ -174,12 +175,38 @@ class _SalesState extends State<Sales> {
                                               ListTile(
                                                 title: Text(
                                                     '${item['quantity']} x ${item['category']} ${item['product_name']}'),
-                                                subtitle: item['comments']
+                                                subtitle: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (item['comments']
                                                             ?.isNotEmpty ==
-                                                        true
-                                                    ? Text(
-                                                        'Adicionales: ${item['comments']}')
-                                                    : null,
+                                                        true)
+                                                      Text(
+                                                          'Comentarios: ${item['comments']}'),
+                                                    if (item.containsKey(
+                                                            'extras') &&
+                                                        (item['extras'] as List)
+                                                            .isNotEmpty) ...[
+                                                      const Text('Extras:',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: (item[
+                                                                    'extras']
+                                                                as List)
+                                                            .map((extra) => Text(
+                                                                '- ${extra['extra_name']}: \$${(extra['extra_price'] ?? 0.0).toStringAsFixed(2)}'))
+                                                            .toList(),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
                                                 trailing: Text(
                                                   '\$${(item['total_price'] ?? 0.0).toStringAsFixed(2)}',
                                                   style: const TextStyle(
@@ -200,9 +227,54 @@ class _SalesState extends State<Sales> {
                                                         Colors.white,
                                                   ),
                                                   onPressed: () async {
-                                                    // Implementa la lógica para cancelar el producto aquí
-                                                    print(
-                                                        'Cancelar producto implementado');
+                                                    // Muestra un cuadro de diálogo para confirmar la eliminación
+                                                    bool? confirmed =
+                                                        await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (BuildContext
+                                                          context) {
+                                                        return AlertDialog(
+                                                          title: const Text(
+                                                              '¿Estás seguro?'),
+                                                          content: const Text(
+                                                              '¿Quieres eliminar este pedido? Esta acción no se puede deshacer.'),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(
+                                                                        false); // No eliminar
+                                                              },
+                                                              child: const Text(
+                                                                  'Cancelar'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(
+                                                                        true); // Confirmar eliminación
+                                                              },
+                                                              child: const Text(
+                                                                  'Eliminar'),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+
+                                                    // Si el usuario confirma, elimina el pedido
+                                                    if (confirmed == true) {
+                                                      await deleteOrder(sale[
+                                                          'id']); // Eliminar el pedido de Firebase usando su ID
+                                                      // Recargar los datos de ventas después de la eliminación
+                                                      setState(() {
+                                                        salesData = fetchSalesData(
+                                                            period:
+                                                                period); // Recargar las ventas para actualizar la vista
+                                                      });
+                                                    }
                                                   },
                                                   child: const Row(
                                                     mainAxisAlignment:

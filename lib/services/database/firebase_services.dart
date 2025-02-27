@@ -102,13 +102,34 @@ Future<void> addOrders(String uid, cart.Order order) async {
 
   // Guardar los elementos del pedido en la subcolección "items"
   for (var item in order.items) {
-    await orderDoc.collection('items').add({
+    final itemDoc = await orderDoc.collection('items').add({
       'product_name': item.producto.nombre,
       'category': item.categoria,
       'comments': item.comentario,
       'quantity': item.cantidad,
       'total_price': item.totalPrice,
     });
+
+    // Guardar los extras asociados a este item en la subcolección "extras"
+  for (var extra in item.extras) {
+    await itemDoc.collection('extras').add({
+      'extra_name': extra.nombre,
+      'extra_price': extra.precio,
+    });
+  }
+  }
+}
+
+Future<void> deleteOrder(String orderId) async {
+  try {
+    // Obtén la referencia al documento de la orden
+    final orderDoc = FirebaseFirestore.instance.collection('orders').doc(orderId);
+
+    // Eliminar el documento de la colección
+    await orderDoc.delete();
+    print('Orden eliminada con éxito.');
+  } catch (e) {
+    print('Error al eliminar la orden: $e');
   }
 }
 
@@ -118,7 +139,11 @@ Future<List<Map<String, dynamic>>> fetchSalesData({required String period}) asyn
     DateTime endOfPeriod = now;
 
     if (period == 'day') {
-      startOfPeriod = DateTime(now.year, now.month, now.day, 14).subtract(const Duration(days: 1)); // Ayer a las 2PM
+      // Si la hora actual es antes de las 2 PM, el periodo comienza desde AYER a las 2 PM
+      bool isBefore2PM = now.hour < 14;
+      startOfPeriod = isBefore2PM
+          ? DateTime(now.year, now.month, now.day - 1, 14) // Ayer a las 2 PM
+          : DateTime(now.year, now.month, now.day, 14); // Hoy a las 2 PM
     } else {
       startOfPeriod = DateTime(now.year, now.month, now.day - 6, 14).subtract(const Duration(days: 1)); // Hace una semana a las 2PM
     }
@@ -145,10 +170,29 @@ Future<List<Map<String, dynamic>>> fetchSalesData({required String period}) asyn
         .collection('items')
         .get();
 
-    data['items'] = subCollectionSnapshot.docs
-        .map((subDoc) => subDoc.data() as Map<String, dynamic>)
-        .toList();
+    List<Map<String, dynamic>> items = [];
 
+    // Iterar sobre los 'items'
+    for (var itemDoc in subCollectionSnapshot.docs) {
+      Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
+
+      // Consultar los 'extras' de cada item
+      QuerySnapshot extrasSnapshot = await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(doc.id)
+          .collection('items')
+          .doc(itemDoc.id)
+          .collection('extras')
+          .get();
+
+      itemData['extras'] = extrasSnapshot.docs
+          .map((extraDoc) => extraDoc.data() as Map<String, dynamic>)
+          .toList();
+
+      items.add(itemData);
+    }
+
+    data['items'] = items;
     results.add(data);
   }
 

@@ -27,12 +27,11 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
         startOfDay.add(const Duration(hours: 24)); // Mañana a las 2:00 PM
 
     setState(() {
-      completedOrders = orders
-          .where((order){
-            final orderDate = DateTime.parse(order.timestamp.toString()); // Convertir a DateTime
-          return orderDate.isAfter(startOfDay) &&
-                orderDate.isBefore(endOfDay);
-          }).toList();
+      completedOrders = orders.where((order) {
+        final orderDate =
+            DateTime.parse(order.timestamp.toString()); // Convertir a DateTime
+        return orderDate.isAfter(startOfDay) && orderDate.isBefore(endOfDay);
+      }).toList();
       completedOrders.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     });
   }
@@ -51,12 +50,16 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
       builder: (context, snapshot) {
         // Si está cargando los datos
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator()); // Indicador de carga mientras se obtiene la data
+          return const Center(
+              child:
+                  CircularProgressIndicator()); // Indicador de carga mientras se obtiene la data
         }
 
         // Si ocurrió un error
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}')); // Mostrar el error si ocurre
+          return Center(
+              child: Text(
+                  'Error: ${snapshot.error}')); // Mostrar el error si ocurre
         }
 
         // Si no hay datos o está vacío
@@ -66,25 +69,31 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
 
         final completedOrders = snapshot.data!;
         // Obtener el día de inicio (hoy a las 2 PM)
-        final today = DateTime.now();
-        final startOfDay = DateTime(
-            today.year, today.month, today.day, 14); // Hoy a las 2:00 PM
+        // Obtener la fecha y hora actual
+        final now = DateTime.now();
 
-        // Obtener el día de fin (mañana a las 12 PM)
-        final endOfDay =
-            startOfDay.add(const Duration(hours: 24)); // Mañana a las 2:00 PM
+        // Si la hora actual es antes de las 2:00 PM, tomar el inicio desde AYER a las 2:00 PM
+        final isBefore2PM = now.hour < 14;
+        final startOfRange = isBefore2PM
+            ? DateTime(now.year, now.month, now.day - 1, 14, 0,
+                0) // Ayer a las 2:00 PM
+            : DateTime(
+                now.year, now.month, now.day, 14, 0, 0); // Hoy a las 2:00 PM
 
-        // Filtrar órdenes dentro de ese rango
+        // Fin del rango (24 horas después del inicio)
+        final endOfRange = startOfRange.add(const Duration(hours: 24));
+
+        // Filtrar las órdenes dentro de ese rango
         final filteredOrders = completedOrders.where((order) {
-          final orderDate = DateTime.parse(order.timestamp.toString()); // Convertir a DateTime
-          return orderDate.isAfter(startOfDay) && orderDate.isBefore(endOfDay);
+          final orderDate = DateTime.parse(order.timestamp.toString());
+          return orderDate.isAfter(startOfRange) &&
+              orderDate.isBefore(endOfRange);
         }).toList();
-
 
         // Ordenar las órdenes por timestamp en orden descendente
         filteredOrders.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-        if(filteredOrders.isEmpty){
+        if (filteredOrders.isEmpty) {
           return const Center(child: Text('No hay órdenes completadas hoy.'));
         }
 
@@ -118,13 +127,30 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
                           ListTile(
                             title: Text(
                                 '${item.cantidad} x ${item.categoria} ${item.producto.nombre}'),
-                            subtitle: item.comentario != ''
-                                ? Text('Adicionales: ${item.comentario}')
-                                : null,
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (item.comentario.isNotEmpty)
+                                  Text('Comentarios: ${item.comentario}'),
+                                if (item.extras.isNotEmpty) ...[
+                                  const Text('Extras:',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: item.extras
+                                        .map((extra) => Text(
+                                            '- ${extra.nombre}: \$${extra.precio.toStringAsFixed(2)}'))
+                                        .toList(),
+                                  ),
+                                ],
+                              ],
+                            ),
                             trailing: Text(
                               '\$${item.totalPrice.toStringAsFixed(2)}',
-                              style:
-                                  const TextStyle(color: Colors.black, fontSize: 16),
+                              style: const TextStyle(
+                                  color: Colors.black, fontSize: 16),
                             ),
                           ),
                         Center(
@@ -139,12 +165,16 @@ class _CompletedOrdersTabState extends State<CompletedOrdersTab> {
                               ),
                               onPressed: () async {
                                 // Implementa la funcionalidad para imprimir el ticket aquí
-                                bool? connected = await Printer().ensureConnection(context);
-                                if(connected != null && connected){
-                                double? amount = await showPaymentDialog(
-                                    context, order.total);
+                                bool? connected =
+                                    await Printer().ensureConnection(context);
+                                if (connected != null && connected) {
+                                  double? amount = await showPaymentDialog(
+                                      context, order.total);
                                   if (amount != 0.0) {
-                                    await Printer().printTicketClient(order.items, order.id, amount ?? order.total);
+                                    await Printer().printTicketClient(
+                                        order.items,
+                                        order.id,
+                                        amount ?? order.total);
                                     if (order.mesa == 'preparando') {
                                       await addOrders(order.id, order);
                                       await updateLocalOrder(

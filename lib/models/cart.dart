@@ -17,8 +17,9 @@ class CartItem {
 
   double get totalPrice {
     double extrasTotal = extras.fold(0.0, (sum, extra) => sum + extra.precio);
-    return producto.precio * cantidad + extrasTotal;
+    return (producto.precio + extrasTotal) * cantidad;
   }
+
 
   void incrementarCantidad() {
     cantidad++;

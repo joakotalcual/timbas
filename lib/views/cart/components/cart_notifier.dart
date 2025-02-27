@@ -7,9 +7,10 @@ import 'package:timbas/services/database/sqlite.dart';
 import 'package:uuid/uuid.dart';
 
 class Cart with ChangeNotifier {
-  final Map<String, List<CartItem>> _carts = {};  // Carritos por ID
-  final List<Order> _completedOrders = [];  // Pedidos finalizados
-  final Map<String, String?> _cartMesa = {};  // Mapa para almacenar la mesa asociada a cada carrito
+  final Map<String, List<CartItem>> _carts = {}; // Carritos por ID
+  final List<Order> _completedOrders = []; // Pedidos finalizados
+  final Map<String, String?> _cartMesa =
+      {}; // Mapa para almacenar la mesa asociada a cada carrito
 
   // Obtiene el carrito para un ID específico, creando uno nuevo si no existe
   List<CartItem> getCart(String id) {
@@ -31,8 +32,23 @@ class Cart with ChangeNotifier {
     return _carts.entries.map((entry) {
       final cartId = entry.key;
       final cartItems = entry.value;
-      final total = cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
-      return Order(id: cartId, total: total, mesa: getMesa(cartId), items: cartItems, timestamp: DateTime.now(),); // Incluye la mesa
+      final total = cartItems.fold(0.0, (sum, item) {
+        // Sumar el precio del producto (producto.precio * cantidad)
+        double productTotal = item.producto.precio * item.cantidad;
+        // Calcular el total de los extras, multiplicado por la cantidad
+        double extrasTotal = item.extras.fold(0.0,
+            (extraSum, extra) => extraSum + (extra.precio * item.cantidad));
+        // Sumar ambos totales (producto + extras)
+        return sum + productTotal + extrasTotal;
+      });
+
+      return Order(
+        id: cartId,
+        total: total,
+        mesa: getMesa(cartId),
+        items: cartItems,
+        timestamp: DateTime.now(),
+      ); // Incluye la mesa
     }).toList();
   }
 
@@ -42,17 +58,29 @@ class Cart with ChangeNotifier {
   }
 
   // Añade un ítem al carrito
-  void addItem(String id, Producto producto, String nombreCategoria, String comentario, List<Extra> extras) {
+  void addItem(String id, Producto producto, String nombreCategoria,
+      String comentario, List<Extra> extras) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id && item.comentario == comentario && _areExtrasEqual(item.extras, extras),
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras),
+      (item) =>
+          item.producto.id == producto.id &&
+          item.comentario == comentario &&
+          _areExtrasEqual(item.extras, extras),
+      orElse: () => CartItem(
+          producto: producto,
+          categoria: nombreCategoria,
+          comentario: comentario,
+          extras: extras),
     );
 
     if (cart.contains(existingItem)) {
       existingItem.incrementarCantidad();
     } else {
-      cart.add(CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras));
+      cart.add(CartItem(
+          producto: producto,
+          categoria: nombreCategoria,
+          comentario: comentario,
+          extras: extras));
     }
     notifyListeners();
   }
@@ -70,11 +98,19 @@ class Cart with ChangeNotifier {
   }
 
   // Elimina un ítem del carrito
-  void removeItem(String id, Producto producto, String nombreCategoria, String comentario, extras) {
+  void removeItem(String id, Producto producto, String nombreCategoria,
+      String comentario, extras) {
     final cart = getCart(id);
     final existingItem = cart.firstWhere(
-      (item) => item.producto.id == producto.id && item.comentario == comentario && _areExtrasEqual(item.extras, extras),
-      orElse: () => CartItem(producto: producto, categoria: nombreCategoria, comentario: comentario, extras: extras),
+      (item) =>
+          item.producto.id == producto.id &&
+          item.comentario == comentario &&
+          _areExtrasEqual(item.extras, extras),
+      orElse: () => CartItem(
+          producto: producto,
+          categoria: nombreCategoria,
+          comentario: comentario,
+          extras: extras),
     );
 
     if (cart.contains(existingItem)) {
@@ -90,16 +126,23 @@ class Cart with ChangeNotifier {
   // Limpia el carrito para un ID específico
   void clear(String id) {
     _carts.remove(id);
-    _cartMesa.remove(id);  // Elimina la mesa asociada también
+    _cartMesa.remove(id); // Elimina la mesa asociada también
     notifyListeners();
   }
 
   // Marca un pedido como completado y lo mueve a la lista de pedidos finalizados
   void markOrderAsCompleted(String orderId) async {
     //final cart = getCart(orderId);
-    final cartItems = List<CartItem>.from(getCart(orderId)); // Copia de los CartItems
+    final cartItems =
+        List<CartItem>.from(getCart(orderId)); // Copia de los CartItems
     final total = getTotalAmount(orderId);
-    final order = Order(id: generateShortUuid(), total: total, mesa: 'preparando', items: cartItems, timestamp: DateTime.now(),); // Incluye la mesa
+    final order = Order(
+      id: generateShortUuid(),
+      total: total,
+      mesa: 'preparando',
+      items: cartItems,
+      timestamp: DateTime.now(),
+    ); // Incluye la mesa
     _completedOrders.add(order);
     await addLocalOrder(order);
     clear(orderId);
@@ -109,20 +152,23 @@ class Cart with ChangeNotifier {
   // Calcula el monto total del carrito para un ID específico
   double getTotalAmount(String id) {
     return getCart(id).fold(0.0, (total, item) {
-      double extrasTotal = item.extras.fold(0.0, (sum, extra) => sum + extra.precio);
-      return total + item.producto.precio * item.cantidad + (extrasTotal * item.cantidad);
+      double extrasTotal =
+          item.extras.fold(0.0, (sum, extra) => sum + extra.precio);
+      return total +
+          item.producto.precio * item.cantidad +
+          (extrasTotal * item.cantidad);
     });
   }
 
   String generateShortUuid() {
-  var uuid = Uuid().v4(); // Generar un UUID
-  var bytes = utf8.encode(uuid); // Convertir a bytes
-  var shortUuid = base64UrlEncode(bytes).substring(0, 12); // Codificar en Base64 y truncar a 12 caracteres
+    var uuid = Uuid().v4(); // Generar un UUID
+    var bytes = utf8.encode(uuid); // Convertir a bytes
+    var shortUuid = base64UrlEncode(bytes)
+        .substring(0, 12); // Codificar en Base64 y truncar a 12 caracteres
 
-  // Insertar guiones después de cada 4 caracteres
-  return '${shortUuid.substring(0, 4)}-${shortUuid.substring(4, 8)}-${shortUuid.substring(8, 12)}';
-}
-
+    // Insertar guiones después de cada 4 caracteres
+    return '${shortUuid.substring(0, 4)}-${shortUuid.substring(4, 8)}-${shortUuid.substring(8, 12)}';
+  }
 }
 
 // Clase para representar un pedido
