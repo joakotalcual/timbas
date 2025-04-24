@@ -13,10 +13,16 @@ class Sales extends StatefulWidget {
 class _SalesState extends State<Sales> {
   late Future<List<Map<String, dynamic>>> salesData;
   String period = 'day'; // 'day' or 'week'
-
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+  String periodText = "";
   @override
   void initState() {
     super.initState();
+    periodText =
+        'Período: Últimas 24 horas (1:59PM)'; //getPeriod(time); // Obtener el periodo dinámico
     salesData = fetchSalesData(period: period);
   }
 
@@ -24,29 +30,17 @@ class _SalesState extends State<Sales> {
     return sales.fold(0.0, (total, sale) => total + (sale['total'] ?? 0.0));
   }
 
-//   String getPeriod(DateTime currentTime) {
-//   final hour = currentTime.hour;
-//   final now = DateFormat('dd-MM-yyyy').format(currentTime);
-
-//   if (hour < 14) {
-//     // De 2 PM del día anterior hasta 1:59 PM del día actual
-//     final yesterday = currentTime.subtract(const Duration(days: 1));
-//     final formattedYesterday = DateFormat('dd-MM-yyyy').format(yesterday);
-//     return '2PM ($formattedYesterday) - 2PM ($now)';
-//   } else {
-//     // De 2 PM del día actual hasta 1:59 PM del día siguiente
-//     final tomorrow = currentTime.add(const Duration(days: 1));
-//     final formattedTomorrow = DateFormat('dd-MM-yyyy').format(tomorrow);
-//     return '2PM ($now) - 2PM ($formattedTomorrow)';
-//   }
-// }
+  @override
+  void dispose() {
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     DateTime time = DateTime.now();
     final today = DateFormat('dd-MM-yyyy').format(time);
-    String periodText =
-        'Período: Últimas 24 horas (1:59PM)'; //getPeriod(time); // Obtener el periodo dinámico
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ventas'),
@@ -84,6 +78,53 @@ class _SalesState extends State<Sales> {
                       style: TextStyle(color: Colors.black87),
                     ),
                   ),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(
+                        Icons.filter_alt,
+                        color: Colors.black87,
+                      ),
+                      label: const Text(
+                        'Filtrar por fechas',
+                        style: TextStyle(color: Colors.black87),
+                      ),
+                      onPressed: () {
+                        if (_customStartDate != null &&
+                            _customEndDate != null) {
+                          if (_customEndDate!.isBefore(_customStartDate!)) {
+                            // Mostrar alerta si las fechas no son válidas
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Rango de fechas no válido'),
+                                content: const Text(
+                                    'La fecha de fin debe ser igual o posterior a la fecha de inicio.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('OK'),
+                                  )
+                                ],
+                              ),
+                            );
+                            return; // Salimos y no actualizamos nada
+                          }
+                          final formattedStart = DateFormat('dd-MM-yyyy')
+                              .format(_customStartDate!);
+                          final formattedEnd =
+                              DateFormat('dd-MM-yyyy').format(_customEndDate!);
+                          setState(() {
+                            salesData = fetchSalesData(
+                              startDate: _customStartDate,
+                              endDate: _customEndDate,
+                            );
+                            periodText =
+                                'Período: Del $formattedStart al $formattedEnd';
+                          });
+                        }
+                      },
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
@@ -97,6 +138,74 @@ class _SalesState extends State<Sales> {
                       style: TextStyle(color: Colors.black87),
                     ),
                   ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filtrar por fechas:',
+                    style: TextStyle(color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _startDateController,
+                          readOnly: true,
+                          style: const TextStyle(color: Colors.black87),
+                          decoration: const InputDecoration(
+                            labelText: 'Fecha inicio',
+                            border: OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _customStartDate = picked;
+                                _startDateController.text =
+                                    DateFormat('dd-MM-yyyy').format(picked);
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _endDateController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Fecha fin',
+                            border: OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _customEndDate = picked;
+                                _endDateController.text =
+                                    DateFormat('dd-MM-yyyy').format(picked);
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                 ],
               ),
               const SizedBox(height: 16),

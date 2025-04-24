@@ -133,12 +133,18 @@ Future<void> deleteOrder(String orderId) async {
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchSalesData({required String period}) async {
+Future<List<Map<String, dynamic>>> fetchSalesData({String? period, // ahora opcional
+  DateTime? startDate,
+  DateTime? endDate,}) async {
     final now = DateTime.now();
     DateTime startOfPeriod;
-    DateTime endOfPeriod = now;
+    DateTime endOfPeriod = endDate ?? now;
 
-    if (period == 'day') {
+    if (startDate != null && endDate != null) {
+    // Si se pasan fechas específicas, usamos esas
+      startOfPeriod = startDate;
+      endOfPeriod = endDate;
+    }else if (period == 'day') {
       // Si la hora actual es antes de las 2 PM, el periodo comienza desde AYER a las 2 PM
       bool isBefore2PM = now.hour < 14;
       startOfPeriod = isBefore2PM

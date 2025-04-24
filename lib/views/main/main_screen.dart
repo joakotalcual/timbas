@@ -4,6 +4,7 @@ import 'package:timbas/views/articles/articles_screen.dart';
 import 'package:timbas/views/buys/buy_screen.dart';
 import 'package:timbas/views/print_ticket/print_ticket_screen.dart';
 import 'package:timbas/views/sales/sales_screen.dart';
+import 'package:timbas/views/stats/stats_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -35,6 +36,11 @@ class _MainScreenState extends State<MainScreen> {
       'title': 'Recibos',
       'icon': Icons.receipt,
       'content': const Sales(),
+    },
+    {
+      'title': 'Estadísticas',
+      'icon': Icons.bar_chart,
+      'content': const StatsScreen(), // Este será tu nuevo widget
     },
     {
       'title': 'Artículos',
