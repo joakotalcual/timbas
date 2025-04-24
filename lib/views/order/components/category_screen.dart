@@ -28,14 +28,24 @@ class CategoryDetailScreen extends StatelessWidget {
         title: Text(categoria.nombre),
       ),
       body: FutureBuilder(
-        future: getLocalProductsFuture(categoria.id),
+        future: Future.wait([
+          getLocalProductsFuture(
+              categoria.id), // productos de la categoría actual
+          getLocalProductsFuture(
+              "LLO2BaBZeqwVHpvbKPkj"), // productos de la categoría frappes
+        ]),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final products = snapshot.data!;
-          // Filtramos los productos activos
-          final activeProducts = products.where((product) => product.activo).toList();
+          final List<Producto> products = snapshot.data![0]; // categoría actual
+          final List<Producto> frappesExtras =
+              snapshot.data![1]; // siempre disponibles
+
+          final activeProducts =
+              products.where((product) => product.activo).toList();
+          final activeFrappes =
+              frappesExtras.where((product) => product.activo).toList();
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: GridView.builder(
@@ -48,9 +58,8 @@ class CategoryDetailScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final product = activeProducts[index];
                 // Si la categoría es "Frappes", pasamos la lista de productos activos
-                final List<Producto>? productosFrappes = categoria.nombre.toLowerCase() == "frappes"
-                    ? activeProducts : null;
-                return _buildGridItem(context, product, categoria.nombre, cartId, productosFrappes);
+                return _buildGridItem(
+                    context, product, categoria.nombre, cartId, activeFrappes);
               },
             ),
           );
@@ -82,11 +91,15 @@ class CategoryDetailScreen extends StatelessWidget {
       child: Card(
         child: Column(
           children: [
-              Image.asset(
-                producto.imagen,
-                fit: BoxFit.contain,
-                height: isLandscape && !isSmallScreen ? 120 : !isLandscape && isMediumScreen ? 130 :  75 ,
-              ),
+            Image.asset(
+              producto.imagen,
+              fit: BoxFit.contain,
+              height: isLandscape && !isSmallScreen
+                  ? 120
+                  : !isLandscape && isMediumScreen
+                      ? 130
+                      : 75,
+            ),
             Padding(
               padding: const EdgeInsets.all(6.0),
               child: Text(
@@ -95,7 +108,11 @@ class CategoryDetailScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: isLandscape && !isSmallScreen ? fontTitle - 1.2 : fontTitle ,
+                  fontSize: isLandscape && !isSmallScreen
+                      ? fontTitle - 1.2
+                      : isSmallScreen
+                          ? fontTitle - 3
+                          : fontTitle,
                   fontWeight: FontWeight.bold,
                 ),
               ),

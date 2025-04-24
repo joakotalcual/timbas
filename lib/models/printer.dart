@@ -301,12 +301,17 @@ class Printer {
       "frappes de frutas": "FRF",
       "frappes": "FRP",
       "diablitos": "DBL",
+      "banderillas": "BAN",
     };
     // Abreviar la categoría si existe en el diccionario
     String catAbrev =
         categoriasAbreviadas[categoria.toLowerCase()] ?? categoria;
     // Eliminar la palabra "BASE" de producto y limpiar espacios extra
     String productoLimpio = producto.replaceAll("BASE", "").replaceAll(RegExp(r"\s+"), " ").trim();
+    productoLimpio = producto.replaceAll("PAQUETE", "").replaceAll(RegExp(r"\s+"), " PAQ. ").trim();
+    if(producto.toString().toLowerCase() == "salchipulpo" || producto.toString().toLowerCase() == "papas fritas"){
+      catAbrev = "";
+    }
     // Crear la línea formateada asegurando los 32 caracteres
     String formattedLine =
         "$cantidad x ${catAbrev.padRight(5)} ${productoLimpio.padRight(14)} \$${precio.toStringAsFixed(2)}";

@@ -108,8 +108,6 @@ Future<List<Producto>> getLocalProductsFuture(String idCategoria) async {
   return queryResult.map((row) => Producto.fromMap(row)).toList();
 }
 
-
-
 Future<bool> hasInternetConnection() async {
   try {
     var connectivityResult = await (Connectivity().checkConnectivity());

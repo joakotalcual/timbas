@@ -32,6 +32,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   TextEditingController commentController = TextEditingController();
   List<String> selectedExtras = [];
   List<String> frappesExtras = [];
+  List<String> banderillasExtras = ["Clasica","Flamin hot","Papa"];
 
   void _incrementarCantidad() {
     setState(() {
@@ -69,12 +70,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       if (selectedExtras.contains(extra)) {
         selectedExtras.remove(extra);
       } else {
-        if (selectedExtras.length < 10) {
+        if (selectedExtras.length < 10 && widget.categoria.toLowerCase() !="banderillas") {
+          selectedExtras.add(extra);
+        }else if(selectedExtras.isEmpty && widget.categoria.toLowerCase() == "banderillas"){
           selectedExtras.add(extra);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("No puedes agregar más de 10 adicionales."),
+              content: Text("No puedes agregar más adicionales."),
               duration: Duration(seconds: 2),
             ),
           );
@@ -133,6 +136,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     bool isFrappes = widget.categoria.toLowerCase() == "frappes";
+    bool isBanderillas = widget.categoria.toLowerCase() == "banderillas";
+    bool notIsExtraBanderillas = (widget.producto.nombre.contains("Paquete") || widget.producto.nombre == "Salchipulpo" || widget.producto.nombre == "Papas Fritas");
   return Scaffold(
     appBar: AppBar(
       title: Text(widget.categoria),
@@ -183,7 +188,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ],
               ),
               // Sección de adicionales SOLO si la categoría es Frappes
-                if (isFrappes)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -194,7 +198,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                       Wrap(
                         spacing: 8.0,
-                        children: frappesExtras.map((extra) {
+                        children: (isBanderillas ? banderillasExtras : frappesExtras).map((extra) {
                           bool isSelected = selectedExtras.contains(extra);
                           return ChoiceChip(
                             label: Text(extra),

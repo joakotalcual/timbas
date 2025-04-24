@@ -77,29 +77,30 @@ class _BuysState extends State<Buys> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: DropdownButton<String>(
-                  value: "Todos los artículos",
-                  items: const [
-                    DropdownMenuItem(
-                      value: "Todos los artículos",
-                      child: Text("Todos los artículos"),
-                    ),
-                  ],
-                  onChanged: (value) {},
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
+        const SizedBox(height: 30,),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        //   child: Row(
+        //     children: [
+        //       Expanded(
+        //         child: DropdownButton<String>(
+        //           value: "Todos los artículos",
+        //           items: const [
+        //             DropdownMenuItem(
+        //               value: "Todos los artículos",
+        //               child: Text("Todos los artículos"),
+        //             ),
+        //           ],
+        //           onChanged: (value) {},
+        //         ),
+        //       ),
+        //       IconButton(
+        //         icon: const Icon(Icons.search),
+        //         onPressed: () {},
+        //       ),
+        //     ],
+        //   ),
+        // ),
         Expanded(
           child: FutureBuilder(
             future:

@@ -173,30 +173,30 @@ class _ItemProductState extends State<ItemProduct> {
                 labelText: 'Extra',
               ),
             ),
-            const SizedBox(height: 16),
-            const Text("SELECCIONAR FOTO"),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: _assetImage != null
-                        ? Image.asset(
-                            _assetImage!,
-                            fit: BoxFit.cover,
-                          )
-                        : const Center(
-                            child: Text(
-                              'Toca para seleccionar una imagen(No disponible)',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-              ),
-            ),
+            // const SizedBox(height: 16),
+            // const Text("SELECCIONAR FOTO"),
+            // const SizedBox(height: 16),
+            // GestureDetector(
+            //   onTap: _pickImage,
+            //   child: Container(
+            //     height: 200,
+            //     width: double.infinity,
+            //     decoration: BoxDecoration(
+            //       border: Border.all(color: Colors.grey),
+            //     ),
+            //     child: _assetImage != null
+            //             ? Image.asset(
+            //                 _assetImage!,
+            //                 fit: BoxFit.cover,
+            //               )
+            //             : const Center(
+            //                 child: Text(
+            //                   'Toca para seleccionar una imagen(No disponible)',
+            //                   style: TextStyle(color: Colors.grey),
+            //                 ),
+            //               ),
+            //   ),
+            // ),
             const SizedBox(height: 16),
             Row(
               children: [
