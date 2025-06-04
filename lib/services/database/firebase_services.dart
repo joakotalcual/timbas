@@ -206,3 +206,14 @@ Future<List<Map<String, dynamic>>> fetchSalesData({String? period, // ahora opci
 
   }
 
+Future<List<Map<String, dynamic>>> getPromotions() async {
+  final snapshot = await db.collection('promociones').where('activo', isEqualTo: true).get();
+  return snapshot.docs.map((doc) {
+    return {
+      'uid': doc.id,
+      'nombre': doc['nombre'],
+      'productos': List<String>.from(doc['productos']),
+      'precio_combo': doc['precio_combo'],
+    };
+  }).toList();
+}

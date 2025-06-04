@@ -82,18 +82,32 @@ class Printer {
     // Detalle de los ítems
     for (var item in items) {
       final nombre = sanitizeText(item.producto.nombre);
+      String productoLimpio = nombre
+    .replaceAll("BASE", "")
+    .replaceAll("PAQUETE", "")
+    .replaceAll(RegExp(r"\s+"), " ")
+    .trim();
+
+      // Reemplazos específicos por nombre
+      if (nombre.toLowerCase().contains("super niño")) {
+        productoLimpio = "SN SALCHICHA";
+      } else if (nombre.toLowerCase().contains("mini fiesta")) {
+        productoLimpio = "MF mixta";
+      } else if (nombre.toLowerCase().contains("niño consentido")) {
+        productoLimpio = "NC SALCHIPULPO";
+      }
       final categoria = sanitizeText(item.categoria);
+      final categoriaLimpia = categoria.toLowerCase().contains("banderilla") ? "BAND" : categoria;
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
 
-      bytes += generator.text('$cantidad $categoria de $nombre',
+      bytes += generator.text('$cantidad $categoriaLimpia de $productoLimpio',
           styles:
               const PosStyles(align: PosAlign.left, height: PosTextSize.size2));
 
       if (item.extras.isNotEmpty) {
         bytes += generator.text('Extras:');
         for (var extra in item.extras) {
-          //print("- ${extra.nombre}: \$${extra.precio.toStringAsFixed(2)}");//QUITAR EL PRECIO SOLO ES COMANDA
           bytes += generator.text(' - ${sanitizeText(extra.nombre)}');
         }
       }
@@ -155,11 +169,7 @@ class Printer {
       final cantidad = item.cantidad;
       final comentario = sanitizeText(item.comentario);
       final precio = item.producto.precio;
-      final rowItem = sanitizedCategory(
-          cantidad,
-          categoria,
-          nombre,
-          precio);
+      final rowItem = sanitizedCategory(cantidad, categoria, nombre, precio);
       bytes += generator.text(rowItem,
           styles: const PosStyles(align: PosAlign.left));
       if (item.extras.isNotEmpty) {
@@ -213,7 +223,6 @@ class Printer {
             default: // Si cabe bien, lo deja sin modificar
               linea = "- $nombreLimpio";
           }
-
           bytes += generator.text(linea);
         }
       }
@@ -224,19 +233,17 @@ class Printer {
     }
 
     // Total
-    double total = items.fold(
-      0.0, (sum, item) {
-        // Sumar el precio del producto por la cantidad
-        double itemTotal = item.producto.precio * item.cantidad;
+    double total = items.fold(0.0, (sum, item) {
+      // Sumar el precio del producto por la cantidad
+      double itemTotal = item.producto.precio * item.cantidad;
 
-        // Sumar los extras para este item
-        double extrasTotal = item.extras
-            .fold(0.0, (extrasSum, extra) => extrasSum + extra.precio);
+      // Sumar los extras para este item
+      double extrasTotal =
+          item.extras.fold(0.0, (extrasSum, extra) => extrasSum + extra.precio);
 
-        // Añadir el precio de los extras al total del item
-        return sum + itemTotal + extrasTotal;
-      }
-    );
+      // Añadir el precio de los extras al total del item
+      return sum + itemTotal + extrasTotal;
+    });
     bytes += generator.text('--------------------------------');
     bytes += generator.text(
       'Total: \$${total.toStringAsFixed(2)}',
@@ -306,10 +313,22 @@ class Printer {
     // Abreviar la categoría si existe en el diccionario
     String catAbrev =
         categoriasAbreviadas[categoria.toLowerCase()] ?? categoria;
-    // Eliminar la palabra "BASE" de producto y limpiar espacios extra
-    String productoLimpio = producto.replaceAll("BASE", "").replaceAll(RegExp(r"\s+"), " ").trim();
-    productoLimpio = producto.replaceAll("PAQUETE", "").replaceAll(RegExp(r"\s+"), " PAQ. ").trim();
-    if(producto.toString().toLowerCase() == "salchipulpo" || producto.toString().toLowerCase() == "papas fritas"){
+    String productoLimpio = producto
+        .replaceAll("BASE", "")
+        .replaceAll("PAQUETE", "")
+        .replaceAll(RegExp(r"\s+"), " ")
+        .trim();
+
+    // Reemplazos específicos por nombre
+    if (producto.toLowerCase().contains("super niño")) {
+      productoLimpio = "SN SALCHICHA";
+    } else if (producto.toLowerCase().contains("mini fiesta")) {
+      productoLimpio = "MF mixta";
+    } else if (producto.toLowerCase().contains("niño consentido")) {
+      productoLimpio = "NC SALCHIPULPO";
+    }
+    if (producto.toString().toLowerCase().contains("salchipulpo") ||
+        producto.toString().toLowerCase() == "papas fritas") {
       catAbrev = "";
     }
     // Crear la línea formateada asegurando los 32 caracteres

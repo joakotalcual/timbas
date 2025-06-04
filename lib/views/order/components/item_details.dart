@@ -135,9 +135,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isFrappes = widget.categoria.toLowerCase() == "frappes";
     bool isBanderillas = widget.categoria.toLowerCase() == "banderillas";
-    bool notIsExtraBanderillas = (widget.producto.nombre.contains("Paquete") || widget.producto.nombre == "Salchipulpo" || widget.producto.nombre == "Papas Fritas");
+    bool notIsExtraBanderillas = (widget.producto.nombre.toLowerCase().contains("paquete") || widget.producto.nombre.toLowerCase().contains("salchipulpo") || widget.producto.nombre.toLowerCase() == "papas fritas");
   return Scaffold(
     appBar: AppBar(
       title: Text(widget.categoria),
@@ -188,6 +187,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ],
               ),
               // Sección de adicionales SOLO si la categoría es Frappes
+              if(!notIsExtraBanderillas)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

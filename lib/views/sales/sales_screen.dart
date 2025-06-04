@@ -30,6 +30,42 @@ class _SalesState extends State<Sales> {
     return sales.fold(0.0, (total, sale) => total + (sale['total'] ?? 0.0));
   }
 
+  double calcularGanancia(List<Map<String, dynamic>> sales, double total) {
+    // Mapa con los valores asignados a cada producto
+  final productValues = {
+    'Queso': 38.0,
+    'Salchicha': 37.0,
+    'Mixta': 39.0,
+    'Paquete Queso': 133.0,
+    'Paquete Salchicha': 122.0,
+    'Paquete Mixta': 134.0,
+    'salchipulpo': 28.0,
+  };
+  double gananciaTotal = 0.0;
+
+  for (var sale in sales) {
+    final items = sale['items'] as List<dynamic>?;
+
+    if (items != null) {
+      for (var item in items) {
+        final productName = item['product_name'] as String?;
+        final quantity = item['quantity'] ?? 1;
+
+        if (productName != null && productValues.containsKey(productName)) {
+          gananciaTotal += productValues[productName]! * quantity;
+        }
+      }
+    }
+  }
+
+  return gananciaTotal;
+  }
+
+  double calcularBanco(double win, double total) {
+    return total - win ;
+  }
+
+
   @override
   void dispose() {
     _startDateController.dispose();
@@ -230,6 +266,8 @@ class _SalesState extends State<Sales> {
 
                   final sales = snapshot.data!;
                   final totalSales = calculateTotal(sales);
+                  final totalWin = calcularGanancia(sales, totalSales);
+                  final totalBank = calcularBanco(totalWin, totalSales);
 
                   return Expanded(
                     child: Column(
@@ -237,6 +275,16 @@ class _SalesState extends State<Sales> {
                       children: [
                         Text(
                           'Total Ventas: \$${totalSales.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Total Ganancia: \$${totalWin.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Total Banco: \$${totalBank.toStringAsFixed(2)}',
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
