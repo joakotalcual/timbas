@@ -34,12 +34,17 @@ class _SalesState extends State<Sales> {
     // Mapa con los valores asignados a cada producto
   final productValues = {
     'Queso': 38.0,
-    'Salchicha': 37.0,
-    'Mixta': 39.0,
+    'Salchicha': 39.0,
+    'Mixta': 41.0,
     'Paquete Queso': 133.0,
-    'Paquete Salchicha': 122.0,
-    'Paquete Mixta': 134.0,
+    'Paquete Salchicha': 127.0,
+    'Paquete Mixta': 136.0,
     'salchipulpo': 28.0,
+    'Paquete 2 Salchicha': 134,
+    'Paquete 2 Mixta': 136,
+    'Paquete 2 Queso': 139,
+    'Helado Frito': 23,
+    'Waffle': 42,
   };
   double gananciaTotal = 0.0;
 
@@ -279,12 +284,12 @@ class _SalesState extends State<Sales> {
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Total Ganancia: \$${totalWin.toStringAsFixed(2)}',
+                          'Total Banco: \$${totalWin.toStringAsFixed(2)}',
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Total Banco: \$${totalBank.toStringAsFixed(2)}',
+                          'Total Ganancia: \$${totalBank.toStringAsFixed(2)}',
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
@@ -296,8 +301,6 @@ class _SalesState extends State<Sales> {
                               final sale = sales[index];
                               final timestamp =
                                   (sale['timestamp'] as Timestamp).toDate();
-                              final items = sale['items'] ??
-                                  []; // Lista de productos en el recibo
                               return Card(
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 5, horizontal: 5),

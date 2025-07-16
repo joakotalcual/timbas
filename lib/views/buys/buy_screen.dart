@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timbas/controllers/bd_controller.dart';
@@ -78,29 +79,6 @@ class _BuysState extends State<Buys> {
           ),
         ),
         const SizedBox(height: 30,),
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        //   child: Row(
-        //     children: [
-        //       Expanded(
-        //         child: DropdownButton<String>(
-        //           value: "Todos los artículos",
-        //           items: const [
-        //             DropdownMenuItem(
-        //               value: "Todos los artículos",
-        //               child: Text("Todos los artículos"),
-        //             ),
-        //           ],
-        //           onChanged: (value) {},
-        //         ),
-        //       ),
-        //       IconButton(
-        //         icon: const Icon(Icons.search),
-        //         onPressed: () {},
-        //       ),
-        //     ],
-        //   ),
-        // ),
         Expanded(
           child: FutureBuilder(
             future:
@@ -195,9 +173,10 @@ class _BuysState extends State<Buys> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
+              child: AutoSizeText(
                 categoria.nombre,
                 maxLines: 2,
+                minFontSize: 15,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: fontTitle,

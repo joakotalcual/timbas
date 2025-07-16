@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:timbas/controllers/bd_controller.dart';
 import 'package:timbas/helpers/responsive.dart';
@@ -102,21 +103,17 @@ class CategoryDetailScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(6.0),
-              child: Text(
-                producto.nombre,
-                maxLines: 2,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: isLandscape && !isSmallScreen
-                      ? fontTitle - 1.2
-                      : isSmallScreen
-                          ? fontTitle - 3
-                          : fontTitle,
-                  fontWeight: FontWeight.bold,
+              child: AutoSizeText(
+                  producto.nombre,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  minFontSize: 12,
+                  style: TextStyle(
+                    fontSize: fontTitle,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

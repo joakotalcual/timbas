@@ -151,14 +151,39 @@ class Cart with ChangeNotifier {
 
   // Calcula el monto total del carrito para un ID específico
   double getTotalAmount(String id) {
-    return getCart(id).fold(0.0, (total, item) {
-      double extrasTotal =
-          item.extras.fold(0.0, (sum, extra) => sum + extra.precio);
-      return total +
-          item.producto.precio * item.cantidad +
-          (extrasTotal * item.cantidad);
+  return getCart(id).fold(0.0, (total, item) {
+    // Buscar si el extra "Combinado" está presente
+    // bool tieneCombinado = item.extras.any(
+    //   (extra) => extra.nombre.toLowerCase() == 'combinado',
+    // );
+
+    // double frutaTotal = tieneCombinado ? 5.0 : 0.0;
+
+    // Precios especiales por nombre (si no ya viene en .precio)
+    double personalizadosTotal = item.extras.fold(0.0, (sum, extra) {
+      switch (extra.nombre.toLowerCase()) {
+        case 'combinado':
+        return sum + 5;
+        case 'nutella':
+          return sum + 10.0;
+        case 'crema batida':
+        case 'helado':
+          return sum + 5.0;
+        case 'plátano':
+        case 'fresa':
+          // Ya considerado en frutaTotal
+          return sum;
+        default:
+          return sum + extra.precio; // Por defecto usa su precio
+      }
     });
-  }
+
+    double itemTotal = (item.producto.precio  + personalizadosTotal) * item.cantidad;
+
+    return total + itemTotal;
+  });
+}
+
 
   String generateShortUuid() {
     var uuid = Uuid().v4(); // Generar un UUID
